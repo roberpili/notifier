@@ -918,7 +918,7 @@ const docTemplate = `{
                     "enum": [
                         "daily",
                         "weekly",
-                        "montly",
+                        "monthly",
                         "yearly"
                     ],
                     "allOf": [
@@ -926,7 +926,7 @@ const docTemplate = `{
                             "$ref": "#/definitions/entity.FrequencyType"
                         }
                     ],
-                    "example": "montly"
+                    "example": "monthly"
                 },
                 "name": {
                     "type": "string",
@@ -1370,7 +1370,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:3000",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Notifier API",

@@ -10,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-co-op/gocron/v2"
 	routes "github.com/rober0xf/notifier/internal/delivery/http"
 	"github.com/rober0xf/notifier/internal/infraestructure/persistance/postgres"
+	"github.com/rober0xf/notifier/internal/infraestructure/scheduler"
 	"github.com/rober0xf/notifier/pkg/auth"
 	"github.com/rober0xf/notifier/pkg/database"
 	"github.com/rober0xf/notifier/pkg/email"
@@ -21,6 +23,7 @@ type APIServer struct {
 	addr        string
 	router      http.Handler
 	cancelClean context.CancelFunc
+	scheduler   gocron.Scheduler
 }
 
 func NewAPIServer(addr string) (*APIServer, error) {
@@ -39,12 +42,17 @@ func NewAPIServer(addr string) (*APIServer, error) {
 	paymentRepo := postgres.NewPaymentRepository(db)
 
 	tokenGen := auth.NewJWTGenerator(database.JwtKey, 24)
-	emailSender := email.NewSMTPSender(
-		os.Getenv("SMTP_HOST"),
-		os.Getenv("SMTP_PORT"),
-		os.Getenv("SMTP_USERNAME"),
-		os.Getenv("SMTP_PASSWORD"),
-	)
+
+	emailSender, err := email.NewFromEnv()
+	if err != nil {
+		return nil, fmt.Errorf("could not load email sender: %w", err)
+	}
+
+	alerter := scheduler.NewAlerter(emailSender)
+	sched, err := alerter.InitCron()
+	if err != nil {
+		return nil, fmt.Errorf("cron setup: %w", err)
+	}
 
 	// handlers
 	userHandler := buildUserRoutes(userRepo, tokenGen, emailSender, googleClientID)
@@ -55,7 +63,12 @@ func NewAPIServer(addr string) (*APIServer, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	database.StartTokenCleanJob(ctx, userRepo)
 
-	return &APIServer{addr: addr, router: router, cancelClean: cancel}, nil
+	return &APIServer{
+		addr:        addr,
+		router:      router,
+		cancelClean: cancel,
+		scheduler:   sched,
+	}, nil
 }
 
 func (s *APIServer) Run() error {
@@ -74,9 +87,14 @@ func (s *APIServer) Run() error {
 		<-quit
 		log.Println("shutting down server")
 		s.cancelClean()
+		if err := s.scheduler.Shutdown(); err != nil {
+			log.Printf("scheduler shutdown: %v", err)
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		server.Shutdown(ctx)
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("server shutdown: %v", err)
+		}
 	}()
 
 	log.Printf("server running on %s", s.addr)

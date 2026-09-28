@@ -28,9 +28,9 @@ definitions:
         enum:
         - daily
         - weekly
-        - montly
+        - monthly
         - yearly
-        example: montly
+        example: monthly
       name:
         example: claude
         maxLength: 100
@@ -343,7 +343,7 @@ definitions:
     - TransactionTypeExpense
     - TransactionTypeIncome
     - TransactionTypeSubscription
-host: localhost:3000
+host: localhost:8080
 info:
   contact: {}
   description: Notifier API

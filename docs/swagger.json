@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:3000",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/v1/admin/payments": {
@@ -912,7 +912,7 @@
                     "enum": [
                         "daily",
                         "weekly",
-                        "montly",
+                        "monthly",
                         "yearly"
                     ],
                     "allOf": [
@@ -920,7 +920,7 @@
                             "$ref": "#/definitions/entity.FrequencyType"
                         }
                     ],
-                    "example": "montly"
+                    "example": "monthly"
                 },
                 "name": {
                     "type": "string",
