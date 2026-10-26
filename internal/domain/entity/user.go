@@ -12,13 +12,13 @@ const (
 )
 
 type User struct {
-	ID           int
-	Username     string
-	Email        string
-	PasswordHash string
-	GoogleID     string
-	Name         string
-	IsActive     bool
-	Role         Role
-	CreatedAt    time.Time
+	ID           int       `json:"id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"-"`
+	GoogleID     string    `json:"-"`
+	Name         string    `json:"name"`
+	IsActive     bool      `json:"isActive"`
+	Role         Role      `json:"role"`
+	CreatedAt    time.Time `json:"createdAt"`
 }

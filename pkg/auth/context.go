@@ -39,5 +39,9 @@ func GetRoleFromContext(c *gin.Context) (entity.Role, error) {
 		return "", ErrMissingClaims
 	}
 
+	if role != entity.RoleAdmin && role != entity.RoleUser {
+		return "", ErrInvalidRole
+	}
+
 	return role, nil
 }

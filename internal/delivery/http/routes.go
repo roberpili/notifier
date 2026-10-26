@@ -31,10 +31,10 @@ func SetupRoutes(userHandler *UserHandler, paymentHandler *PaymentHandler, authM
 	protected.Use(authMiddleware)
 	admin.Use(authMiddleware, auth.AdminOnly())
 
-	setupAdminOnlyRoutes(admin, userHandler, paymentHandler)
 	setupPublicUsersRoutes(v1, userHandler)
 	setupProtectedUsersRoutes(protected, userHandler)
 	setupPaymentsRoutes(protected, paymentHandler)
+	setupAdminRoutes(admin, userHandler, paymentHandler)
 
 	// frontend
 	r.Static("/static", "./frontend/dist")
@@ -61,17 +61,14 @@ func setupProtectedUsersRoutes(protected *gin.RouterGroup, userHandler *UserHand
 	users.PUT("/:id", userHandler.Update)
 }
 
-func setupAdminOnlyRoutes(admin *gin.RouterGroup, userHandler *UserHandler, paymentHandler *PaymentHandler) {
-	users := admin.Group("/users")
-	payments := admin.Group("/payments")
+func setupAdminRoutes(admin *gin.RouterGroup, userHandler *UserHandler, paymentHandler *PaymentHandler) {
+	admin.GET("/users", userHandler.GetAll)
+	admin.GET("/users/:id", userHandler.GetByID)
+	admin.GET("/users/email/:email", userHandler.GetByEmail)
+	admin.DELETE("/users/:id", userHandler.Delete)
 
-	users.GET("", userHandler.GetAll)
-	users.GET("/email/:email", userHandler.GetByEmail)
-	users.GET("/:id", userHandler.GetByID)
-	users.DELETE("/:id", userHandler.Delete)
-
-	payments.GET("", paymentHandler.GetAll)
-	payments.GET("/:id", paymentHandler.GetByID)
+	admin.GET("/payments", paymentHandler.GetAll)
+	admin.GET("/payments/:id", paymentHandler.GetByID)
 }
 
 func setupPaymentsRoutes(protected *gin.RouterGroup, paymentHandler *PaymentHandler) {
