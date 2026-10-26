@@ -45,14 +45,16 @@ vulncheck:
 swagger:
 	swag init -g cmd/main.go -o docs
 
+MIGRATE=migrate -path ./migrations -database "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable"
+
 migrate-up:
-	migrate -path ./migrations -database "$(DATABASE_URL)" up
+	$(MIGRATE) up
 
 migrate-down:
-	migrate -path ./migrations -database "$(DATABASE_URL)" down
+	$(MIGRATE) down
 
 migrate-create:
 	migrate create -ext sql -dir migrations -seq $(name)
 
 migrate-force:
-	migrate -path ./migrations -database "$(DATABASE_URL)" force 3
+	$(MIGRATE) force 3
