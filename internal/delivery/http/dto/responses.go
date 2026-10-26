@@ -3,6 +3,12 @@ package dto
 import "github.com/rober0xf/notifier/internal/domain/entity"
 
 // users
+type LoginResponse struct {
+	ID    int    `json:"id" example:"1"`
+	Email string `json:"email" example:"rober@example.com"`
+	Role  string `json:"role" example:"user"`
+}
+
 type UserCreatedResponse struct {
 	Message string      `json:"message" example:"check your email to verify your account"`
 	User    UserPayload `json:"user"`

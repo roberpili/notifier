@@ -60,5 +60,6 @@ func (h *UserHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.LoginResponse{
 		ID:    out.User.ID,
 		Email: out.User.Email,
+		Role:  string(out.User.Role),
 	})
 }

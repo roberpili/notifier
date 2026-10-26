@@ -14,8 +14,3 @@ type LoginPayload struct {
 type GoogleLoginRequest struct {
 	IDToken string `json:"id_token" binding:"required" example:"eyGaksdjaldasdj..."`
 }
-
-type LoginResponse struct {
-	ID    int    `json:"id" example:"1"`
-	Email string `json:"email" example:"rober@example.com"`
-}
