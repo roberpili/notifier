@@ -39,7 +39,13 @@ func (h *PaymentHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	payment, err := h.getPaymentByIDUC.Execute(c.Request.Context(), id, userID)
+	role, err := auth.GetRoleFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
+		return
+	}
+
+	payment, err := h.getPaymentByIDUC.Execute(c.Request.Context(), id, userID, role)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrPaymentNotFound):

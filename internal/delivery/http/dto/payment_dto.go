@@ -25,6 +25,7 @@ type CreatePaymentRequest struct {
 
 type PaymentResponse struct {
 	ID         int32                  `json:"id" example:"7"`
+	UserID     int                    `json:"user_id" example:"7"`
 	Name       string                 `json:"name" example:"claude"`
 	Amount     float64                `json:"amount" example:"14.99"`
 	Type       entity.TransactionType `json:"type" enums:"income,expense,subscription"`
@@ -55,6 +56,7 @@ type UpdatePaymentRequest struct {
 func ToPaymentResponse(payment entity.Payment) PaymentResponse {
 	return PaymentResponse{
 		ID:         payment.ID,
+		UserID:     payment.UserID,
 		Name:       payment.Name,
 		Amount:     payment.Amount,
 		Type:       payment.Type,

@@ -22,7 +22,7 @@ func NewGetPaymentByIDUseCase(paymentRepo repository.PaymentRepository) *GetPaym
 	}
 }
 
-func (uc *GetPaymentByIDUseCase) Execute(ctx context.Context, id, userID int) (*entity.Payment, error) {
+func (uc *GetPaymentByIDUseCase) Execute(ctx context.Context, id, userID int, userRole entity.Role) (*entity.Payment, error) {
 	payment, err := uc.paymentRepo.GetPaymentByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
@@ -32,7 +32,7 @@ func (uc *GetPaymentByIDUseCase) Execute(ctx context.Context, id, userID int) (*
 		return nil, fmt.Errorf("GetPaymentByIDUC.Execute failed to get payment by id: %w", err)
 	}
 
-	if payment.UserID != userID {
+	if payment.UserID != userID && userRole != entity.RoleAdmin {
 		return nil, authErr.ErrForbidden
 	}
 

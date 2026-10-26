@@ -98,7 +98,7 @@ func TestGetPaymentByID_NotFound_Integration(t *testing.T) {
 	assert.Equal(t, "payment not found", response.Error)
 }
 
-func TestGetPaymentByID_Forbidden_Integration(t *testing.T) {
+func TestGetPaymentByID_AdminCanAccessOtherUsersPayment_Integration(t *testing.T) {
 	userDeps, paymentDeps := setupTestDependencies(t)
 	token := getAdminToken(t, userDeps)
 	token2 := getAdminToken(t, userDeps)
@@ -122,10 +122,12 @@ func TestGetPaymentByID_Forbidden_Integration(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	paymentDeps.router.ServeHTTP(w, req)
-	require.Equal(t, http.StatusForbidden, w.Code)
+	require.Equal(t, http.StatusOK, w.Code)
 
-	var response dto.ErrorResponse
+	var response dto.PaymentResponse
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	require.NoError(t, err)
-	assert.Equal(t, "cannot access payments from other users", response.Error)
+
+	assert.Equal(t, int32(paymentID), response.ID)
+	assert.Equal(t, "spotify", response.Name)
 }
