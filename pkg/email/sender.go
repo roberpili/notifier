@@ -30,12 +30,13 @@ func NewFromEnv() (EmailSender, error) {
 	}
 
 	switch os.Getenv("EMAIL_PROVIDER") {
-	case "mailtrap":
-		token := os.Getenv("MAILTRAP_API_TOKEN")
+	case "resend":
+		token := os.Getenv("EMAIL_API_TOKEN")
 		if token == "" {
-			return nil, fmt.Errorf("MAILTRAP_API_TOKEN is required")
+			return nil, fmt.Errorf("EMAIL_API_TOKEN is required")
 		}
-		return NewMailtrapSender(token, from, os.Getenv("MAIL_FROM_NAME"))
+
+		return NewSenderProvider(token, from, os.Getenv("MAIL_FROM_NAME")), nil
 
 	case "smtp", "":
 		return NewSMTPSender(
