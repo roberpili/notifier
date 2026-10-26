@@ -1,3 +1,4 @@
 [submodule "frontend"]
 	path = frontend
-	url = git@github.com:rober0xf/notifier-front.git
+	url = git@github.com:roberpili/notifier-front.git
+	branch = master
