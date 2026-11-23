@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
@@ -12,13 +13,19 @@ import (
 	"github.com/rober0xf/notifier/pkg/auth"
 )
 
-type UpdateUserUseCase struct {
+type UpdateUserService struct {
 	userRepo repository.UserRepository
+	logger   *slog.Logger
 }
 
-func NewUpdateUserUseCase(userRepo repository.UserRepository) *UpdateUserUseCase {
-	return &UpdateUserUseCase{
+func NewUpdateUserService(userRepo repository.UserRepository, logger *slog.Logger) *UpdateUserService {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &UpdateUserService{
 		userRepo: userRepo,
+		logger:   logger,
 	}
 }
 
@@ -29,43 +36,55 @@ type UpdateUserInput struct {
 	Password *string
 }
 
-func (uc *UpdateUserUseCase) Execute(ctx context.Context, input UpdateUserInput, userID int, role entity.Role) (*entity.User, error) {
-	existingUser, err := uc.fetchUser(ctx, input.ID)
+func (s *UpdateUserService) Execute(ctx context.Context, input UpdateUserInput, userID int, role entity.Role) (*entity.User, error) {
+	existingUser, err := s.fetchUser(ctx, input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := uc.authorizeUpdate(userID, existingUser.ID, role); err != nil {
+	if err := s.authorizeUpdate(userID, existingUser.ID, role); err != nil {
 		return nil, err
 	}
 
-	profileChanged, passwordChanged, err := uc.applyChanges(existingUser, input)
+	profileChanged, passwordChanged, err := s.applyChanges(existingUser, input)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := uc.persistChanges(ctx, existingUser, profileChanged, passwordChanged); err != nil {
+	if !profileChanged && !passwordChanged {
+		return existingUser, nil
+	}
+
+	if err := s.persistChanges(ctx, existingUser, profileChanged, passwordChanged); err != nil {
 		return nil, err
 	}
+
+	s.logger.InfoContext(ctx, "user updated",
+		slog.Int("target_user_id", existingUser.ID),
+		slog.Int("actor_id", userID),
+		slog.String("actor_role", string(role)),
+		slog.Bool("profile_changed", profileChanged),
+		slog.Bool("password_changed", passwordChanged),
+	)
 
 	return existingUser, nil
 }
 
-func (uc *UpdateUserUseCase) fetchUser(ctx context.Context, id int) (*entity.User, error) {
-	user, err := uc.userRepo.GetUserByID(ctx, id)
+func (s *UpdateUserService) fetchUser(ctx context.Context, id int) (*entity.User, error) {
+	user, err := s.userRepo.GetUserByID(ctx, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, repoErr.ErrNotFound):
 			return nil, domainErr.ErrUserNotFound
 		default:
-			return nil, fmt.Errorf("UpdateUserUC.fetchUser failed to get user by id: %w", err)
+			return nil, fmt.Errorf("get user by id: %w", err)
 		}
 	}
 
 	return user, nil
 }
 
-func (uc *UpdateUserUseCase) authorizeUpdate(givenID, expectedID int, role entity.Role) error {
+func (s *UpdateUserService) authorizeUpdate(givenID, expectedID int, role entity.Role) error {
 	if givenID != expectedID && role != entity.RoleAdmin {
 		return auth.ErrForbidden
 	}
@@ -73,7 +92,7 @@ func (uc *UpdateUserUseCase) authorizeUpdate(givenID, expectedID int, role entit
 	return nil
 }
 
-func (uc *UpdateUserUseCase) applyChanges(user *entity.User, input UpdateUserInput) (profileChanged, passwordChanged bool, err error) {
+func (s *UpdateUserService) applyChanges(user *entity.User, input UpdateUserInput) (profileChanged, passwordChanged bool, err error) {
 	if input.Username != nil && *input.Username != "" && *input.Username != user.Username {
 		user.Username = *input.Username
 		profileChanged = true
@@ -95,7 +114,7 @@ func (uc *UpdateUserUseCase) applyChanges(user *entity.User, input UpdateUserInp
 
 		hashedPassword, err := auth.HashPassword(*input.Password)
 		if err != nil {
-			return false, false, fmt.Errorf("UpdateUserUC.applyChanges failed to hash password: %w", err)
+			return false, false, fmt.Errorf("hash password: %w", err)
 		}
 
 		user.PasswordHash = hashedPassword
@@ -105,9 +124,9 @@ func (uc *UpdateUserUseCase) applyChanges(user *entity.User, input UpdateUserInp
 	return profileChanged, passwordChanged, nil
 }
 
-func (uc *UpdateUserUseCase) persistChanges(ctx context.Context, user *entity.User, profileChanged, passwordChanged bool) error {
+func (s *UpdateUserService) persistChanges(ctx context.Context, user *entity.User, profileChanged, passwordChanged bool) error {
 	if profileChanged {
-		if err := uc.userRepo.UpdateUserProfile(ctx, user.ID, user.Username, user.Email); err != nil {
+		if err := s.userRepo.UpdateUserProfile(ctx, user.ID, user.Username, user.Email); err != nil {
 			switch {
 			case errors.Is(err, repoErr.ErrNotFound):
 				return domainErr.ErrUserNotFound
@@ -116,18 +135,18 @@ func (uc *UpdateUserUseCase) persistChanges(ctx context.Context, user *entity.Us
 			case errors.Is(err, repoErr.ErrUsernameAlreadyExists):
 				return domainErr.ErrUsernameAlreadyExists
 			default:
-				return fmt.Errorf("UpdateUserUC.persistChanges failed to update user profile: %w", err)
+				return fmt.Errorf("update user profile: %w", err)
 			}
 		}
 	}
 
 	if passwordChanged {
-		if err := uc.userRepo.UpdateUserPassword(ctx, user.ID, user.PasswordHash); err != nil {
+		if err := s.userRepo.UpdateUserPassword(ctx, user.ID, user.PasswordHash); err != nil {
 			switch {
 			case errors.Is(err, repoErr.ErrNotFound):
 				return domainErr.ErrUserNotFound
 			default:
-				return fmt.Errorf("UpdateUserUC.persistChanges failed to update user password: %w", err)
+				return fmt.Errorf("update user password: %w", err)
 			}
 		}
 	}

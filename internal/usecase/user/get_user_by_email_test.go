@@ -12,20 +12,20 @@ import (
 
 func TestGetUserByEmail(t *testing.T) {
 	t.Run("succesfully found the user by email", func(t *testing.T) {
-		uc, mockRepo := setupGetUserByEmailTest(t)
+		s, mockRepo := setupGetUserByEmailTest(t)
 
 		email := "richard@gmail.com"
 		expectedUser := &entity.User{
-			ID:       1,
-			Email:    email,
-			Username: "pied",
+			ID:           1,
+			Email:        email,
+			Username:     "pied",
 			PasswordHash: "password123!-#",
-			IsActive: true,
+			IsActive:     true,
 		}
 		mockRepo.emails[email] = expectedUser
 		mockRepo.users[1] = expectedUser
 
-		user, err := uc.Execute(context.Background(), email)
+		user, err := s.Execute(context.Background(), email)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, user)
@@ -35,10 +35,10 @@ func TestGetUserByEmail(t *testing.T) {
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {
-		uc, _ := setupGetUserByEmailTest(t)
+		s, _ := setupGetUserByEmailTest(t)
 
 		noExists := "notfound@example.com"
-		user, err := uc.Execute(context.Background(), noExists)
+		user, err := s.Execute(context.Background(), noExists)
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
@@ -46,30 +46,30 @@ func TestGetUserByEmail(t *testing.T) {
 	})
 
 	t.Run("returns error for invalid email", func(t *testing.T) {
-		uc, _ := setupGetUserByEmailTest(t)
+		s, _ := setupGetUserByEmailTest(t)
 
 		invalidEmail := "invalid.com"
 
-		user, err := uc.Execute(context.Background(), invalidEmail)
+		user, err := s.Execute(context.Background(), invalidEmail)
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
 	})
 
 	t.Run("returns error for empty email", func(t *testing.T) {
-		uc, _ := setupGetUserByEmailTest(t)
+		s, _ := setupGetUserByEmailTest(t)
 
-		user, err := uc.Execute(context.Background(), "")
+		user, err := s.Execute(context.Background(), "")
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
 	})
 
 	t.Run("handles repository errors", func(t *testing.T) {
-		uc, mockRepo := setupGetUserByEmailTest(t)
+		s, mockRepo := setupGetUserByEmailTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
-		user, err := uc.Execute(context.Background(), "doesntexists@email.com")
+		user, err := s.Execute(context.Background(), "doesntexists@email.com")
 
 		assert.Error(t, err)
 		assert.Nil(t, user)

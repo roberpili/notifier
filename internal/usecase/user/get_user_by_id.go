@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
@@ -11,29 +12,39 @@ import (
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
 )
 
-type GetUserByIDUseCase struct {
+type GetUserByIDService struct {
 	userRepo repository.UserRepository
+	logger   *slog.Logger
 }
 
-func NewGetUserByIDUseCase(userRepo repository.UserRepository) *GetUserByIDUseCase {
-	return &GetUserByIDUseCase{
+func NewGetUserByIDService(userRepo repository.UserRepository, logger *slog.Logger) *GetUserByIDService {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &GetUserByIDService{
 		userRepo: userRepo,
+		logger:   logger,
 	}
 }
 
-func (uc *GetUserByIDUseCase) Execute(ctx context.Context, id int) (*entity.User, error) {
+func (s *GetUserByIDService) Execute(ctx context.Context, id int) (*entity.User, error) {
 	if id <= 0 {
 		return nil, domainErr.ErrInvalidUserData
 	}
 
-	user, err := uc.userRepo.GetUserByID(ctx, id)
+	user, err := s.userRepo.GetUserByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
 			return nil, domainErr.ErrUserNotFound
 		}
 
-		return nil, fmt.Errorf("GetUserByIDUC.Execute failed to get user by id: %w", err)
+		return nil, fmt.Errorf("get user by id: %w", err)
 	}
+
+	slog.InfoContext(ctx, "user got by id",
+		slog.Int("user_id", user.ID),
+	)
 
 	return user, nil
 }

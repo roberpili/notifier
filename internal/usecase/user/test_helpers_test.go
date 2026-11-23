@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
+	"github.com/rober0xf/notifier/internal/usecase/email"
 	"github.com/rober0xf/notifier/internal/usecase/user"
-	"github.com/rober0xf/notifier/pkg/email"
 )
 
 func setupTestRepo(t *testing.T) *MockUserRepository {
@@ -19,7 +19,7 @@ func setupTestRepo(t *testing.T) *MockUserRepository {
 	}
 }
 
-func setupCreateUserTest(t *testing.T) (*user.CreateUserUseCase, *MockUserRepository, *email.MockSender) {
+func setupCreateUserTest(t *testing.T) (*user.CreateUserService, *MockUserRepository, *email.MockSender) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
@@ -29,27 +29,27 @@ func setupCreateUserTest(t *testing.T) (*user.CreateUserUseCase, *MockUserReposi
 	disposableDomains := []string{}
 	baseURL := "http://localhost:3000"
 
-	uc := user.NewCreateUserUseCase(mockRepo, mockEmailSender, disposableDomains, baseURL)
+	s := user.NewCreateUserService(mockRepo, mockEmailSender, disposableDomains, baseURL, nil)
 
-	return uc, mockRepo, mockEmailSender
+	return s, mockRepo, mockEmailSender
 }
 
-func setupGetUserByEmailTest(t *testing.T) (*user.GetUserByEmailUseCase, *MockUserRepository) {
+func setupGetUserByEmailTest(t *testing.T) (*user.GetUserByEmailService, *MockUserRepository) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
-	uc := user.NewGetUserByEmailUseCase(mockRepo)
+	s := user.NewGetUserByEmailService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupGetUserByIDTest(t *testing.T) (*user.GetUserByIDUseCase, *MockUserRepository) {
+func setupGetUserByIDTest(t *testing.T) (*user.GetUserByIDService, *MockUserRepository) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
-	uc := user.NewGetUserByIDUseCase(mockRepo)
+	s := user.NewGetUserByIDService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
 func setupGetAllUsersTest(t *testing.T) (*user.GetAllUsersUseCase, *MockUserRepository) {
@@ -61,29 +61,29 @@ func setupGetAllUsersTest(t *testing.T) (*user.GetAllUsersUseCase, *MockUserRepo
 	return uc, mockRepo
 }
 
-func setupDeleteUserTest(t *testing.T) (*user.DeleteUserUseCase, *MockUserRepository) {
+func setupDeleteUserTest(t *testing.T) (*user.DeleteUserService, *MockUserRepository) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
-	uc := user.NewDeleteUserUseCase(mockRepo)
+	s := user.NewDeleteUserService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupUpdateUserTest(t *testing.T) (*user.UpdateUserUseCase, *MockUserRepository) {
+func setupUpdateUserTest(t *testing.T) (*user.UpdateUserService, *MockUserRepository) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
-	uc := user.NewUpdateUserUseCase(mockRepo)
+	s := user.NewUpdateUserService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupVerifyEmailTest(t *testing.T) (*user.VerifyEmailUseCase, *MockUserRepository) {
+func setupVerifyEmailTest(t *testing.T) (*user.VerifyEmailService, *MockUserRepository) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
-	uc := user.NewVerifyEmailUseCase(mockRepo)
+	s := user.NewVerifyEmailService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }

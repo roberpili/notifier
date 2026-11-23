@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
@@ -12,17 +13,23 @@ import (
 	authErr "github.com/rober0xf/notifier/pkg/auth"
 )
 
-type DeleteUserUseCase struct {
+type DeleteUserService struct {
 	userRepo repository.UserRepository
+	logger   *slog.Logger
 }
 
-func NewDeleteUserUseCase(userRepo repository.UserRepository) *DeleteUserUseCase {
-	return &DeleteUserUseCase{
+func NewDeleteUserService(userRepo repository.UserRepository, logger *slog.Logger) *DeleteUserService {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &DeleteUserService{
 		userRepo: userRepo,
+		logger:   logger,
 	}
 }
 
-func (uc *DeleteUserUseCase) Execute(ctx context.Context, id, userID int, role entity.Role) error {
+func (s *DeleteUserService) Execute(ctx context.Context, id, userID int, role entity.Role) error {
 	if id <= 0 {
 		return domainErr.ErrInvalidUserData
 	}
@@ -31,14 +38,20 @@ func (uc *DeleteUserUseCase) Execute(ctx context.Context, id, userID int, role e
 		return authErr.ErrForbidden
 	}
 
-	err := uc.userRepo.DeleteUser(ctx, id)
+	err := s.userRepo.DeleteUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
 			return domainErr.ErrUserNotFound
 		}
 
-		return fmt.Errorf("DeleteUserUC.Execute failed to delete user: %w", err)
+		return fmt.Errorf("delete user: %w", err)
 	}
+
+	s.logger.InfoContext(ctx, "user deleted",
+		slog.Int("target_user_id", id),
+		slog.Int("actor_id", userID),
+		slog.String("actor_role", string(role)),
+	)
 
 	return nil
 }

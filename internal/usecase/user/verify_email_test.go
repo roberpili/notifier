@@ -14,7 +14,7 @@ import (
 
 func TestVerifyEmail(t *testing.T) {
 	t.Run("successfully activates when a verification is valid", func(t *testing.T) {
-		uc, mockRepo := setupVerifyEmailTest(t)
+		s, mockRepo := setupVerifyEmailTest(t)
 
 		plainToken := "verification_123"
 		tokenHash := sha256.Sum256([]byte(plainToken))
@@ -38,7 +38,7 @@ func TestVerifyEmail(t *testing.T) {
 		}
 		mockRepo.users[1] = user
 
-		verifiedUser, err := uc.Execute(context.Background(), plainToken)
+		verifiedUser, err := s.Execute(context.Background(), plainToken)
 		assert.NoError(t, err)
 		assert.True(t, verifiedUser.IsActive)
 
@@ -47,14 +47,14 @@ func TestVerifyEmail(t *testing.T) {
 	})
 
 	t.Run("returns error when token is invalid", func(t *testing.T) {
-		uc, _ := setupVerifyEmailTest(t)
+		s, _ := setupVerifyEmailTest(t)
 
-		_, err := uc.Execute(context.Background(), "wrong_token")
+		_, err := s.Execute(context.Background(), "wrong_token")
 		assert.ErrorIs(t, err, auth.ErrInvalidToken)
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {
-		uc, mockRepo := setupVerifyEmailTest(t)
+		s, mockRepo := setupVerifyEmailTest(t)
 		plainToken := "plain_token"
 		tokenHash := sha256.Sum256([]byte(plainToken))
 		tokenHashString := hex.EncodeToString(tokenHash[:])
@@ -68,7 +68,7 @@ func TestVerifyEmail(t *testing.T) {
 			ExpiresAt: time.Now().Add(24 * time.Hour),
 		}
 
-		_, err := uc.Execute(context.Background(), plainToken)
+		_, err := s.Execute(context.Background(), plainToken)
 		assert.Contains(t, err.Error(), "resource not found")
 	})
 }
