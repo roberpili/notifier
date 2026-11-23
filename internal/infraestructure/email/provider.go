@@ -3,8 +3,7 @@ package email
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
+	"log/slog"
 
 	"github.com/resend/resend-go/v4"
 )
@@ -12,6 +11,7 @@ import (
 type SenderProvider struct {
 	client *resend.Client
 	from   string
+	logger *slog.Logger
 }
 
 func NewSenderProvider(token, fromEmail, fromName string) *SenderProvider {
@@ -28,12 +28,6 @@ func NewSenderProvider(token, fromEmail, fromName string) *SenderProvider {
 }
 
 func (s *SenderProvider) Send(ctx context.Context, to []string, subject string, htmlBody string) error {
-	// skip in tests
-	if os.Getenv("SKIP_EMAIL_SENDING") == "true" {
-		log.Printf("Test mode: skipping email send to %v (subject: %s)", to, subject)
-		return nil
-	}
-
 	if len(to) == 0 {
 		return fmt.Errorf("no recipients specified")
 	}
@@ -47,16 +41,10 @@ func (s *SenderProvider) Send(ctx context.Context, to []string, subject string, 
 
 	result, err := s.client.Emails.SendWithContext(ctx, params)
 	if err != nil {
-		log.Printf("EMAIL FAILED: to=%v subject=%q error=%v", to, subject, err)
+		s.logger.Error("failed to send email", "error", err, "to", to, "subject", subject)
 		return fmt.Errorf("resend send failed: %w", err)
 	}
-
-	log.Printf(
-		"EMAIL SENT: to=%v subject=%q email_id=%s",
-		to,
-		subject,
-		result.Id,
-	)
+	s.logger.Info("email sent successfully", "to", to, "subject", subject, "email_id", result.Id)
 
 	return nil
 }
