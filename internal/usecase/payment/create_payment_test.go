@@ -13,7 +13,7 @@ import (
 
 func TestCreatePayment(t *testing.T) {
 	t.Run("successfully creates a new payment", func(t *testing.T) {
-		uc, mockRepo := setupCreatePaymentTest(t)
+		s, mockRepo := setupCreatePaymentTest(t)
 
 		paidAt := "2026-03-12"
 		input := &entity.Payment{
@@ -28,7 +28,7 @@ func TestCreatePayment(t *testing.T) {
 			PaidAt:    &paidAt,
 		}
 
-		payment, err := uc.Execute(context.Background(), input.UserID, input)
+		payment, err := s.Execute(context.Background(), input.UserID, input)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, payment)
@@ -44,7 +44,7 @@ func TestCreatePayment(t *testing.T) {
 	})
 
 	t.Run("returns error when payment already exists", func(t *testing.T) {
-		uc, mockRepo := setupCreatePaymentTest(t)
+		s, mockRepo := setupCreatePaymentTest(t)
 
 		mockRepo.err = repoErr.ErrAlreadyExists
 		payment := &entity.Payment{
@@ -58,13 +58,13 @@ func TestCreatePayment(t *testing.T) {
 			Recurrent: false,
 		}
 
-		_, err := uc.Execute(context.Background(), payment.UserID, payment)
+		_, err := s.Execute(context.Background(), payment.UserID, payment)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, domainErr.ErrPaymentAlreadyExists)
 	})
 
 	t.Run("successfully creates recurrent payment with frequency", func(t *testing.T) {
-		uc, _ := setupCreatePaymentTest(t)
+		s, _ := setupCreatePaymentTest(t)
 
 		frequency := entity.FrequencyTypeWeekly
 		paidAt := "2026-06-12"
@@ -81,7 +81,7 @@ func TestCreatePayment(t *testing.T) {
 			PaidAt:    &paidAt,
 		}
 
-		payment, err := uc.Execute(context.Background(), input.UserID, input)
+		payment, err := s.Execute(context.Background(), input.UserID, input)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, payment)
@@ -91,7 +91,7 @@ func TestCreatePayment(t *testing.T) {
 	})
 
 	t.Run("handles repository errors", func(t *testing.T) {
-		uc, mockRepo := setupCreatePaymentTest(t)
+		s, mockRepo := setupCreatePaymentTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
 
@@ -104,7 +104,7 @@ func TestCreatePayment(t *testing.T) {
 			Date:     "2026-02-10",
 		}
 
-		payment, err := uc.Execute(context.Background(), 1, input)
+		payment, err := s.Execute(context.Background(), 1, input)
 
 		assert.Error(t, err)
 		assert.Nil(t, payment)

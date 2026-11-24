@@ -4,26 +4,33 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	authErr "github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
-type DeletePaymentUseCase struct {
+type DeletePaymentService struct {
 	paymentRepo repository.PaymentRepository
+	logger      *slog.Logger
 }
 
-func NewDeletePaymentUseCase(paymentRepo repository.PaymentRepository) *DeletePaymentUseCase {
-	return &DeletePaymentUseCase{
+func NewDeletePaymentService(paymentRepo repository.PaymentRepository, logger *slog.Logger) *DeletePaymentService {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &DeletePaymentService{
 		paymentRepo: paymentRepo,
+		logger:      logger,
 	}
 }
 
-func (uc *DeletePaymentUseCase) Execute(ctx context.Context, id, userID int, userRole entity.Role) error {
-	payment, err := uc.paymentRepo.GetPaymentByID(ctx, id)
+func (s *DeletePaymentService) Execute(ctx context.Context, id, userID int, userRole entity.Role) error {
+	payment, err := s.paymentRepo.GetPaymentByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
 			return domainErr.ErrPaymentNotFound
@@ -33,16 +40,19 @@ func (uc *DeletePaymentUseCase) Execute(ctx context.Context, id, userID int, use
 	}
 
 	if payment.UserID != userID && userRole != entity.RoleAdmin {
-		return authErr.ErrForbidden
+		return middleware.ErrForbidden
 	}
 
-	if err := uc.paymentRepo.DeletePayment(ctx, id); err != nil {
+	if err := s.paymentRepo.DeletePayment(ctx, id); err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
 			return domainErr.ErrPaymentNotFound
 		}
 
-		return fmt.Errorf("DeletePaymentUC.Execute failed to delete payment: %w", err)
+		return fmt.Errorf("delete payment: %w", err)
 	}
+	s.logger.InfoContext(ctx, "payment deleted",
+		"payment_id", id,
+		"user_id", userID)
 
 	return nil
 }

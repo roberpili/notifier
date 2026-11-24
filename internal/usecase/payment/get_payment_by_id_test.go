@@ -7,13 +7,13 @@ import (
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
-	authErr "github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetPaymentByID(t *testing.T) {
 	t.Run("succesfully found the payment by id", func(t *testing.T) {
-		uc, mockRepo := setupGetPaymentByIDTest(t)
+		s, mockRepo := setupGetPaymentByIDTest(t)
 
 		expectedPayment := &entity.Payment{
 			ID:        1,
@@ -28,7 +28,7 @@ func TestGetPaymentByID(t *testing.T) {
 		}
 		mockRepo.payments["1"] = expectedPayment
 
-		payment, err := uc.Execute(context.Background(), int(expectedPayment.ID), 1, entity.RoleUser)
+		payment, err := s.Execute(context.Background(), int(expectedPayment.ID), 1, entity.RoleUser)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, payment)
@@ -40,10 +40,10 @@ func TestGetPaymentByID(t *testing.T) {
 	})
 
 	t.Run("returns error when payment not found", func(t *testing.T) {
-		uc, _ := setupGetPaymentByIDTest(t)
+		s, _ := setupGetPaymentByIDTest(t)
 
 		nonExistingID := 99999
-		payment, err := uc.Execute(context.Background(), nonExistingID, 1, entity.RoleUser)
+		payment, err := s.Execute(context.Background(), nonExistingID, 1, entity.RoleUser)
 
 		assert.Error(t, err)
 		assert.Nil(t, payment)
@@ -51,10 +51,10 @@ func TestGetPaymentByID(t *testing.T) {
 	})
 
 	t.Run("handles repository error", func(t *testing.T) {
-		uc, mockRepo := setupGetPaymentByIDTest(t)
+		s, mockRepo := setupGetPaymentByIDTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
-		payment, err := uc.Execute(context.Background(), 1, 1, entity.RoleUser)
+		payment, err := s.Execute(context.Background(), 1, 1, entity.RoleUser)
 
 		assert.Error(t, err)
 		assert.Nil(t, payment)
@@ -62,7 +62,7 @@ func TestGetPaymentByID(t *testing.T) {
 	})
 
 	t.Run("admins can access payments from other users", func(t *testing.T) {
-		uc, mockRepo := setupGetPaymentByIDTest(t)
+		s, mockRepo := setupGetPaymentByIDTest(t)
 
 		expectedPayment := &entity.Payment{
 			ID:        1,
@@ -77,7 +77,7 @@ func TestGetPaymentByID(t *testing.T) {
 		}
 		mockRepo.payments["1"] = expectedPayment
 
-		payment, err := uc.Execute(
+		payment, err := s.Execute(
 			context.Background(),
 			int(expectedPayment.ID),
 			1,
@@ -90,7 +90,7 @@ func TestGetPaymentByID(t *testing.T) {
 	})
 
 	t.Run("regular users cannot access payments from other users", func(t *testing.T) {
-		uc, mockRepo := setupGetPaymentByIDTest(t)
+		s, mockRepo := setupGetPaymentByIDTest(t)
 
 		mockRepo.payments["1"] = &entity.Payment{
 			ID:     1,
@@ -98,14 +98,14 @@ func TestGetPaymentByID(t *testing.T) {
 			Name:   "netflix",
 		}
 
-		payment, err := uc.Execute(
+		payment, err := s.Execute(
 			context.Background(),
 			1,
 			2,
 			entity.RoleUser,
 		)
 
-		assert.ErrorIs(t, err, authErr.ErrForbidden)
+		assert.ErrorIs(t, err, middleware.ErrForbidden)
 		assert.Nil(t, payment)
 	})
 }

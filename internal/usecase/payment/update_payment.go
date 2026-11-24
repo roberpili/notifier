@@ -4,22 +4,29 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
-type UpdatePaymentUseCase struct {
+type UpdatePaymentService struct {
 	paymentRepo repository.PaymentRepository
+	logger      *slog.Logger
 }
 
-func NewUpdatePaymentUseCase(paymentRepo repository.PaymentRepository) *UpdatePaymentUseCase {
-	return &UpdatePaymentUseCase{
+func NewUpdatePaymentService(paymentRepo repository.PaymentRepository, logger *slog.Logger) *UpdatePaymentService {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &UpdatePaymentService{
 		paymentRepo: paymentRepo,
+		logger:      logger,
 	}
 }
 
@@ -37,8 +44,8 @@ type UpdatePaymentInput struct {
 	ReceiptURL *string
 }
 
-func (uc *UpdatePaymentUseCase) Execute(ctx context.Context, id, userID int, input UpdatePaymentInput) error {
-	existingPayment, err := uc.paymentRepo.GetPaymentByID(ctx, id)
+func (s *UpdatePaymentService) Execute(ctx context.Context, id, userID int, input UpdatePaymentInput) error {
+	existingPayment, err := s.paymentRepo.GetPaymentByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
 			return domainErr.ErrPaymentNotFound
@@ -48,19 +55,23 @@ func (uc *UpdatePaymentUseCase) Execute(ctx context.Context, id, userID int, inp
 	}
 
 	if userID != existingPayment.UserID {
-		return auth.ErrForbidden
+		return middleware.ErrForbidden
 	}
 
 	// partial updates
 	applyPaymentUpdates(&input, existingPayment)
 
-	if err := uc.paymentRepo.UpdatePayment(ctx, existingPayment); err != nil {
+	if err := s.paymentRepo.UpdatePayment(ctx, existingPayment); err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
 			return domainErr.ErrPaymentNotFound
 		}
 
-		return fmt.Errorf("UpdatePaymentUC.Execute failed to update payment: %w", err)
+		return fmt.Errorf("update payment: %w", err)
 	}
+	s.logger.InfoContext(ctx, "updated payment",
+		"payment_id", existingPayment.ID,
+		"user_id", existingPayment.UserID,
+	)
 
 	return nil
 }

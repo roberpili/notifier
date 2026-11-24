@@ -12,7 +12,7 @@ import (
 
 func TestGetMyPayments(t *testing.T) {
 	t.Run("returns payments for a user", func(t *testing.T) {
-		uc, mockPaymentRepo, mockUserRepo := setupGetMyPaymentsTest(t)
+		s, mockPaymentRepo, mockUserRepo := setupGetMyPaymentsTest(t)
 
 		email := "richard@gmail.com"
 		user := &entity.User{
@@ -44,7 +44,7 @@ func TestGetMyPayments(t *testing.T) {
 		mockPaymentRepo.payments["1"] = payment1
 		mockPaymentRepo.payments["2"] = payment2
 
-		payments, err := uc.Execute(context.Background(), user.ID)
+		payments, err := s.Execute(context.Background(), user.ID)
 
 		assert.NoError(t, err)
 		assert.Len(t, payments, 2)
@@ -55,7 +55,7 @@ func TestGetMyPayments(t *testing.T) {
 	})
 
 	t.Run("returns empty list when user has no payments", func(t *testing.T) {
-		uc, _, mockUserRepo := setupGetMyPaymentsTest(t)
+		s, _, mockUserRepo := setupGetMyPaymentsTest(t)
 
 		user := &entity.User{
 			ID:       1,
@@ -65,7 +65,7 @@ func TestGetMyPayments(t *testing.T) {
 		mockUserRepo.users["richard@gmail.com"] = user
 		mockUserRepo.users["1"] = user
 
-		payments, err := uc.Execute(context.Background(), user.ID)
+		payments, err := s.Execute(context.Background(), user.ID)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, payments)
@@ -73,11 +73,11 @@ func TestGetMyPayments(t *testing.T) {
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {
-		uc, _, _ := setupGetMyPaymentsTest(t)
+		s, _, _ := setupGetMyPaymentsTest(t)
 
 		nonExistentID := 99999
 
-		payments, err := uc.Execute(context.Background(), nonExistentID)
+		payments, err := s.Execute(context.Background(), nonExistentID)
 
 		assert.Error(t, err)
 		assert.Nil(t, payments)
@@ -85,7 +85,7 @@ func TestGetMyPayments(t *testing.T) {
 	})
 
 	t.Run("returns only payments from specified user", func(t *testing.T) {
-		uc, mockPaymentRepo, mockUserRepo := setupGetMyPaymentsTest(t)
+		s, mockPaymentRepo, mockUserRepo := setupGetMyPaymentsTest(t)
 
 		user1Email := "richard@gmail.com"
 		user1 := &entity.User{
@@ -121,7 +121,7 @@ func TestGetMyPayments(t *testing.T) {
 			Category: entity.CategoryTypeWork, Date: "2026-01-03",
 		}
 
-		payments, err := uc.Execute(context.Background(), user1.ID)
+		payments, err := s.Execute(context.Background(), user1.ID)
 
 		assert.NoError(t, err)
 		assert.Len(t, payments, 2) // just first user
@@ -132,7 +132,7 @@ func TestGetMyPayments(t *testing.T) {
 	})
 
 	t.Run("returns error when user is not verified", func(t *testing.T) {
-		uc, _, mockUserRepo := setupGetMyPaymentsTest(t)
+		s, _, mockUserRepo := setupGetMyPaymentsTest(t)
 
 		user := &entity.User{
 			ID:       1,
@@ -142,31 +142,31 @@ func TestGetMyPayments(t *testing.T) {
 		mockUserRepo.users["richard@gmail.com"] = user
 		mockUserRepo.users["1"] = user
 
-		payments, err := uc.Execute(context.Background(), user.ID)
+		payments, err := s.Execute(context.Background(), user.ID)
 		assert.ErrorIs(t, err, domainErr.ErrUserNotVerified)
 		assert.Nil(t, payments)
 	})
 
 	t.Run("handles user repository errors", func(t *testing.T) {
-		uc, _, mockUserRepo := setupGetMyPaymentsTest(t)
+		s, _, mockUserRepo := setupGetMyPaymentsTest(t)
 
 		mockUserRepo.err = errors.New("user database connection failed")
 
-		payments, err := uc.Execute(context.Background(), 1)
+		payments, err := s.Execute(context.Background(), 1)
 
 		assert.Error(t, err)
 		assert.Nil(t, payments)
 	})
 
 	t.Run("handles payment, repository errors", func(t *testing.T) {
-		uc, mockPaymentRepo, mockUserRepo := setupGetMyPaymentsTest(t)
+		s, mockPaymentRepo, mockUserRepo := setupGetMyPaymentsTest(t)
 
 		user := &entity.User{ID: 1, Email: "richard@gmail.com"}
 		mockUserRepo.users["richard@gmail.com"] = user
 		mockUserRepo.users["1"] = user
 
 		mockPaymentRepo.err = errors.New("payment database connection error")
-		payments, err := uc.Execute(context.Background(), 1)
+		payments, err := s.Execute(context.Background(), 1)
 
 		assert.Error(t, err)
 		assert.Nil(t, payments)
