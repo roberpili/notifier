@@ -3,28 +3,28 @@ package http
 import "github.com/rober0xf/notifier/internal/usecase/payment"
 
 type PaymentHandler struct {
-	createPaymentUC  *payment.CreatePaymentUseCase
-	getPaymentByIDUC *payment.GetPaymentByIDUseCase
-	getMyPaymentsUC  *payment.GetMyPaymentsUseCase
-	getAllPaymentsUC *payment.GetAllPaymentsUseCase
-	updatePaymentUC  *payment.UpdatePaymentUseCase
-	deletePaymentUC  *payment.DeletePaymentUseCase
+	createPaymentService  *payment.CreatePaymentService
+	getPaymentByIDService *payment.GetPaymentByIDService
+	getMyPaymentsService  *payment.GetMyPaymentsService
+	getAllPaymentsService *payment.GetAllPaymentsService
+	updatePaymentService  *payment.UpdatePaymentService
+	deletePaymentService  *payment.DeletePaymentService
 }
 
 func NewPaymentHandler(
-	createPaymentUC *payment.CreatePaymentUseCase,
-	getPaymentByIDUC *payment.GetPaymentByIDUseCase,
-	getMyPaymentsUC *payment.GetMyPaymentsUseCase,
-	getAllPaymentsUC *payment.GetAllPaymentsUseCase,
-	updatePaymentUC *payment.UpdatePaymentUseCase,
-	deletePaymentUC *payment.DeletePaymentUseCase,
+	createPaymentService *payment.CreatePaymentService,
+	getPaymentByIDService *payment.GetPaymentByIDService,
+	getMyPaymentsService *payment.GetMyPaymentsService,
+	getAllPaymentsService *payment.GetAllPaymentsService,
+	updatePaymentService *payment.UpdatePaymentService,
+	deletePaymentService *payment.DeletePaymentService,
 ) *PaymentHandler {
 	return &PaymentHandler{
-		createPaymentUC:  createPaymentUC,
-		getPaymentByIDUC: getPaymentByIDUC,
-		getMyPaymentsUC:  getMyPaymentsUC,
-		getAllPaymentsUC: getAllPaymentsUC,
-		updatePaymentUC:  updatePaymentUC,
-		deletePaymentUC:  deletePaymentUC,
+		createPaymentService:  createPaymentService,
+		getPaymentByIDService: getPaymentByIDService,
+		getMyPaymentsService:  getMyPaymentsService,
+		getAllPaymentsService: getAllPaymentsService,
+		updatePaymentService:  updatePaymentService,
+		deletePaymentService:  deletePaymentService,
 	}
 }
