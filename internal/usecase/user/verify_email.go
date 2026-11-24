@@ -11,7 +11,7 @@ import (
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 type VerifyEmailService struct {
@@ -38,7 +38,7 @@ func (s *VerifyEmailService) Execute(ctx context.Context, plainToken string) (*e
 	token, err := s.userRepo.VerifyAndConsumeToken(ctx, tokenHash, entity.TokenPurposeEmailVerification)
 	if err != nil {
 		if errors.Is(err, repoErr.ErrNotFound) {
-			return nil, auth.ErrInvalidToken
+			return nil, middleware.ErrInvalidToken
 		}
 
 		return nil, fmt.Errorf("verify and consume token: %w", err)

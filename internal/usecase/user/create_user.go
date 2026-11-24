@@ -8,14 +8,13 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 	infraemail "github.com/rober0xf/notifier/internal/infraestructure/email"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
 	emailusecase "github.com/rober0xf/notifier/internal/usecase/email"
-	"github.com/rober0xf/notifier/pkg/auth"
-	"github.com/rober0xf/notifier/pkg/token"
 )
 
 type CreateUserService struct {
@@ -105,7 +104,7 @@ func (s *CreateUserService) persistUser(ctx context.Context, user *entity.User) 
 }
 
 func (s *CreateUserService) sendVerificationEmail(ctx context.Context, user *entity.User) error {
-	tokenData, err := token.GenerateVerificationToken(12)
+	tokenData, err := auth.GenerateVerificationToken(12)
 	if err != nil {
 		return fmt.Errorf("generate verification token: %w", err)
 	}

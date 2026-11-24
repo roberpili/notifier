@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +50,7 @@ func TestVerifyEmail(t *testing.T) {
 		s, _ := setupVerifyEmailTest(t)
 
 		_, err := s.Execute(context.Background(), "wrong_token")
-		assert.ErrorIs(t, err, auth.ErrInvalidToken)
+		assert.ErrorIs(t, err, middleware.ErrInvalidToken)
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {

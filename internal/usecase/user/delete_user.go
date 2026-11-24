@@ -10,7 +10,7 @@ import (
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	authErr "github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 type DeleteUserService struct {
@@ -35,7 +35,7 @@ func (s *DeleteUserService) Execute(ctx context.Context, id, userID int, role en
 	}
 
 	if id != userID && role != entity.RoleAdmin {
-		return authErr.ErrForbidden
+		return middleware.ErrForbidden
 	}
 
 	err := s.userRepo.DeleteUser(ctx, id)

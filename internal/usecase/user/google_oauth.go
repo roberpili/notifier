@@ -4,28 +4,35 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
+	"github.com/rober0xf/notifier/internal/auth"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 )
 
-type GoogleOAuthUseCase struct {
+type GoogleOAuthService struct {
 	userRepo repository.UserRepository
 	tokenGen auth.TokenGenerator
+	logger   *slog.Logger
 }
 
-func NewOAuthUseCase(userRepo repository.UserRepository, tokenGen auth.TokenGenerator) *GoogleOAuthUseCase {
-	return &GoogleOAuthUseCase{
+func NewOAuthService(userRepo repository.UserRepository, tokenGen auth.TokenGenerator, logger *slog.Logger) *GoogleOAuthService {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &GoogleOAuthService{
 		userRepo: userRepo,
 		tokenGen: tokenGen,
+		logger:   logger,
 	}
 }
 
-func (uc *GoogleOAuthUseCase) Execute(ctx context.Context, googleID, email, name string) (*LoginOutput, error) {
+func (s *GoogleOAuthService) Execute(ctx context.Context, googleID, email, name string) (*LoginOutput, error) {
 	if googleID == "" {
 		return nil, domainErr.ErrInvalidGoogleID
 	}
@@ -35,52 +42,71 @@ func (uc *GoogleOAuthUseCase) Execute(ctx context.Context, googleID, email, name
 	}
 
 	// search for google_id
-	user, err := uc.userRepo.GetUserByGoogleID(ctx, googleID)
+	user, err := s.userRepo.GetUserByGoogleID(ctx, googleID)
 	if err == nil {
-		return uc.buildLoginOutput(user)
+		s.logger.DebugContext(ctx, "Google: existing account found",
+			slog.Int("user_id", user.ID),
+		)
+		return s.buildLoginOutput(user)
 	}
 
 	if !errors.Is(err, repoErr.ErrNotFound) {
-		return nil, fmt.Errorf("GoogleOAuthUC.Execute failed to get user by google id: %w", err)
+		s.logger.ErrorContext(ctx, "Google: failed to get user by Google ID",
+			slog.Any("error", err),
+		)
+		return nil, fmt.Errorf("get user by google id: %w", err)
 	}
 
 	// search for email
-	user, err = uc.userRepo.GetUserByEmail(ctx, email)
+	user, err = s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil && !errors.Is(err, repoErr.ErrNotFound) {
-		return nil, fmt.Errorf("GoogleOAuthUC.Execute failed to get user by email: %w", err)
+		return nil, fmt.Errorf("get user by email: %w", err)
 	}
 
 	// if exists then link account
 	if user != nil {
-		err = uc.userRepo.UpdateUserGoogleID(ctx, user.ID, googleID)
+		err = s.userRepo.UpdateUserGoogleID(ctx, user.ID, googleID)
 		if err != nil {
+			s.logger.ErrorContext(ctx, "Google: failed to link account",
+				slog.Int("user_id", user.ID),
+				slog.Any("error", err),
+			)
 			switch {
 			case errors.Is(err, repoErr.ErrNotFound):
 				return nil, domainErr.ErrUserNotFound
 			case errors.Is(err, repoErr.ErrGoogleExists):
 				return nil, auth.ErrGoogleAccountAlreadyLinked
 			default:
-				return nil, fmt.Errorf("GoogleOAuthUC.Execute failed to link google account: %w", err)
+				return nil, fmt.Errorf("link google account: %w", err)
 			}
 		}
+		s.logger.InfoContext(ctx, "Google: account linked",
+			slog.Int("user_id", user.ID),
+		)
 
 		user.GoogleID = googleID
-		return uc.buildLoginOutput(user)
+		return s.buildLoginOutput(user)
 	}
 
 	// if it doesnt exists then create user
-	user, err = uc.userRepo.CreateOAuthUser(ctx, email, name, googleID)
+	user, err = s.userRepo.CreateOAuthUser(ctx, email, name, googleID)
 	if err != nil {
-		return nil, fmt.Errorf("GoogleOAuthUC.Execute failed to create oauth user: %w", err)
+		s.logger.ErrorContext(ctx, "Google: failed to create user",
+			slog.Any("error", err),
+		)
+		return nil, fmt.Errorf("create oauth user: %w", err)
 	}
+	s.logger.InfoContext(ctx, "Google: user created",
+		slog.Int("user_id", user.ID),
+	)
 
-	return uc.buildLoginOutput(user)
+	return s.buildLoginOutput(user)
 }
 
-func (uc *GoogleOAuthUseCase) buildLoginOutput(user *entity.User) (*LoginOutput, error) {
-	token, err := uc.tokenGen.Generate(user.ID, user.Email, user.Role)
+func (s *GoogleOAuthService) buildLoginOutput(user *entity.User) (*LoginOutput, error) {
+	token, err := s.tokenGen.Generate(user.ID, user.Email, user.Role)
 	if err != nil {
-		return nil, fmt.Errorf("GoogleOAuthUC.buildLoginOutput failed to generate token: %w", err)
+		return nil, fmt.Errorf("generate token: %w", err)
 	}
 
 	return &LoginOutput{Token: token, User: user}, nil

@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	"github.com/rober0xf/notifier/internal/domain/repository"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 type UpdateUserService struct {
@@ -86,7 +87,7 @@ func (s *UpdateUserService) fetchUser(ctx context.Context, id int) (*entity.User
 
 func (s *UpdateUserService) authorizeUpdate(givenID, expectedID int, role entity.Role) error {
 	if givenID != expectedID && role != entity.RoleAdmin {
-		return auth.ErrForbidden
+		return middleware.ErrForbidden
 	}
 
 	return nil

@@ -8,7 +8,7 @@ import (
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
 	repoErr "github.com/rober0xf/notifier/internal/infraestructure/errors"
-	authErr "github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,7 +71,7 @@ func TestDeleteUser(t *testing.T) {
 		mockRepo.users[1] = user
 
 		err := s.Execute(context.Background(), 1, 2, user.Role)
-		assert.ErrorIs(t, err, authErr.ErrForbidden)
+		assert.ErrorIs(t, err, middleware.ErrForbidden)
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {

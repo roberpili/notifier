@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	"github.com/rober0xf/notifier/internal/usecase/user"
-	"github.com/rober0xf/notifier/pkg/auth"
 	"github.com/stretchr/testify/assert"
 
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"

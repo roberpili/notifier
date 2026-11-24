@@ -52,13 +52,13 @@ func setupGetUserByIDTest(t *testing.T) (*user.GetUserByIDService, *MockUserRepo
 	return s, mockRepo
 }
 
-func setupGetAllUsersTest(t *testing.T) (*user.GetAllUsersUseCase, *MockUserRepository) {
+func setupGetAllUsersTest(t *testing.T) (*user.GetAllUsersService, *MockUserRepository) {
 	t.Helper()
 
 	mockRepo := setupTestRepo(t)
-	uc := user.NewGetAllUsersUseCase(mockRepo)
+	s := user.NewGetAllUsersService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
 func setupDeleteUserTest(t *testing.T) (*user.DeleteUserService, *MockUserRepository) {
