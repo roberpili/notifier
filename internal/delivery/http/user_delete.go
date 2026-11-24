@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 // Delete godoc
@@ -35,24 +35,24 @@ func (h *UserHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	userID, err := auth.GetUserIDFromContext(c)
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
 	}
 
-	role, err := auth.GetRoleFromContext(c)
+	role, err := middleware.GetRoleFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
 	}
 
-	err = h.deleteUserUC.Execute(c.Request.Context(), id, userID, role)
+	err = h.deleteUserService.Execute(c.Request.Context(), id, userID, role)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrInvalidUserData):
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "invalid user data"})
-		case errors.Is(err, auth.ErrForbidden):
+		case errors.Is(err, middleware.ErrForbidden):
 			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "cannot delete other user account"})
 		case errors.Is(err, domainErr.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "user not found"})

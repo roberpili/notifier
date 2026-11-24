@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
-	authErr "github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 // VerifyEmail godoc
@@ -24,10 +24,10 @@ import (
 func (h *UserHandler) VerifyEmail(c *gin.Context) {
 	token := c.Param("token")
 
-	_, err := h.verifyEmailUC.Execute(c.Request.Context(), token)
+	_, err := h.verifyEmailService.Execute(c.Request.Context(), token)
 	if err != nil {
 		switch {
-		case errors.Is(err, authErr.ErrInvalidToken):
+		case errors.Is(err, middleware.ErrInvalidToken):
 			c.JSON(http.StatusUnprocessableEntity, dto.ErrorResponse{Error: "invalid or expired verification link"})
 		default:
 			slog.ErrorContext(c.Request.Context(), "failed to verify user", "error", err)

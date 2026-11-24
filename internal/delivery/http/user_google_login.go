@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/session"
 )
 
 // GoogleLogin godoc
@@ -41,7 +42,7 @@ func (h *UserHandler) GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	out, err := h.oauthUC.Execute(c.Request.Context(), googleData.Sub, googleData.Email, googleData.Name)
+	out, err := h.oauthService.Execute(c.Request.Context(), googleData.Sub, googleData.Email, googleData.Name)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrInvalidGoogleID), errors.Is(err, domainErr.ErrInvalidEmailFormat):
@@ -56,9 +57,9 @@ func (h *UserHandler) GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	auth.SetAuthCookie(c, out.Token, auth.CookieConfig{
-		Name:            auth.SessionCookieName,
-		TokenExpiration: auth.TokenExpiration,
+	session.SetAuthCookie(c, out.Token, session.CookieConfig{
+		Name:            session.SessionCookieName,
+		TokenExpiration: session.TokenExpiration,
 		Secure:          false,
 		HttpOnly:        true,
 	})

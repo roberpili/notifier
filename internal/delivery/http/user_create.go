@@ -36,7 +36,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 	}
 
 	// here we use the service logic
-	user, err := h.createUserUC.Execute(c.Request.Context(), payload.Username, payload.Email, payload.Password)
+	user, err := h.createUserService.Execute(c.Request.Context(), payload.Username, payload.Email, payload.Password)
 	if err != nil {
 		handleCreateUserError(c, err)
 		return

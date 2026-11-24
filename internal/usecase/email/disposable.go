@@ -7,8 +7,7 @@ var disposableEmails []byte
 
 func MustDisposableEmail() []string {
 	emails := make([]string, 0)
-	for _, domain := range stringLines(disposableEmails) {
-		emails = append(emails, domain)
-	}
+	emails = append(emails, stringLines(disposableEmails)...)
+
 	return emails
 }

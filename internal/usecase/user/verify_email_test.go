@@ -42,7 +42,7 @@ func TestVerifyEmail(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, verifiedUser.IsActive)
 
-		storedUser, err := mockRepo.GetUserByID(context.Background(), 1)
+		storedUser, _ := mockRepo.GetUserByID(context.Background(), 1)
 		assert.True(t, storedUser.IsActive)
 	})
 

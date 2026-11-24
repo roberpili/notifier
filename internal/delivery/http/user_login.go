@@ -7,9 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
-	"github.com/rober0xf/notifier/pkg/auth"
-	authErr "github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
+	"github.com/rober0xf/notifier/internal/session"
 )
 
 // Login godoc
@@ -35,12 +36,12 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	out, err := h.loginUC.Execute(c.Request.Context(), payload.Email, payload.Password)
+	out, err := h.loginService.Execute(c.Request.Context(), payload.Email, payload.Password)
 	if err != nil {
 		switch {
-		case errors.Is(err, authErr.ErrInvalidCredentials):
+		case errors.Is(err, middleware.ErrInvalidCredentials):
 			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "invalid credentials"})
-		case errors.Is(err, authErr.ErrEmailNotVerified):
+		case errors.Is(err, auth.ErrEmailNotVerified):
 			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "email not verified"})
 		default:
 			slog.ErrorContext(c.Request.Context(), "failed to login user", "error", err)
@@ -50,9 +51,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	auth.SetAuthCookie(c, out.Token, auth.CookieConfig{
-		Name:            auth.SessionCookieName,
-		TokenExpiration: auth.TokenExpiration,
+	session.SetAuthCookie(c, out.Token, session.CookieConfig{
+		Name:            session.SessionCookieName,
+		TokenExpiration: session.TokenExpiration,
 		Secure:          false,
 		HttpOnly:        true,
 	})
