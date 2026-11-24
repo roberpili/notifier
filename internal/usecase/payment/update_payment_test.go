@@ -36,7 +36,7 @@ func TestUpdatePayment(t *testing.T) {
 			Amount: &newAmount,
 		}
 
-		err := s.Execute(context.Background(), 1, 1, input)
+		_ = s.Execute(context.Background(), 1, 1, input)
 
 		updatedPayment, err := mockRepo.GetPaymentByID(context.Background(), 1)
 
@@ -72,7 +72,7 @@ func TestUpdatePayment(t *testing.T) {
 			Name: &newName,
 		}
 
-		err := s.Execute(context.Background(), 1, 1, input)
+		_ = s.Execute(context.Background(), 1, 1, input)
 		updatedPayment, err := mockRepo.GetPaymentByID(context.Background(), 1)
 
 		assert.NoError(t, err)
@@ -102,7 +102,7 @@ func TestUpdatePayment(t *testing.T) {
 			Frequency: &yearly,
 		}
 
-		err := s.Execute(context.Background(), 1, 1, input)
+		_ = s.Execute(context.Background(), 1, 1, input)
 		updatedPayment, err := mockRepo.GetPaymentByID(context.Background(), 1)
 
 		assert.NoError(t, err)

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/rober0xf/notifier/docs"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -29,7 +29,7 @@ func SetupRoutes(userHandler *UserHandler, paymentHandler *PaymentHandler, authM
 	protected := v1.Group("/auth")
 
 	protected.Use(authMiddleware)
-	admin.Use(authMiddleware, auth.AdminOnly())
+	admin.Use(authMiddleware, middleware.AdminOnly())
 
 	setupPublicUsersRoutes(v1, userHandler)
 	setupProtectedUsersRoutes(protected, userHandler)

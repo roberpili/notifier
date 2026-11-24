@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/rober0xf/notifier/cmd/api"
@@ -22,7 +24,8 @@ func main() {
 		log.Printf("no .env file loaded: %v", err)
 	}
 
-	server, err := api.NewAPIServer(":8080")
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	server, err := api.NewAPIServer(":8080", logger)
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}

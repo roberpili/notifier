@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/rober0xf/notifier/internal/database"
 	"github.com/rober0xf/notifier/internal/seed"
-	"github.com/rober0xf/notifier/pkg/database"
 )
 
 func main() {
