@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
-	"github.com/rober0xf/notifier/pkg/database"
+	"github.com/rober0xf/notifier/internal/database"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,11 +41,11 @@ func setupTestDB(t *testing.T) *pgxpool.Pool {
 	}
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		database.GetEnvOrFatal("POSTGRES_USER_TEST"),
-		url.QueryEscape(database.GetEnvOrFatal("POSTGRES_PASSWORD_TEST")),
-		database.GetEnvOrFatal("POSTGRES_HOST_TEST"),
-		database.GetEnvOrFatal("POSTGRES_PORT_TEST"),
-		database.GetEnvOrFatal("POSTGRES_DB_TEST"),
+		database.GetEnvOrFatal[string]("POSTGRES_USER_TEST"),
+		url.QueryEscape(database.GetEnvOrFatal[string]("POSTGRES_PASSWORD_TEST")),
+		database.GetEnvOrFatal[string]("POSTGRES_HOST_TEST"),
+		database.GetEnvOrFatal[string]("POSTGRES_PORT_TEST"),
+		database.GetEnvOrFatal[string]("POSTGRES_DB_TEST"),
 	)
 
 	db, err := pgxpool.New(context.Background(), dsn)
