@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rober0xf/notifier/pkg/email"
+	email "github.com/rober0xf/notifier/internal/infraestructure/email"
 )
 
 type PostgresConfig struct {

@@ -1,6 +1,20 @@
-package auth
+package session
 
-import "github.com/gin-gonic/gin"
+import (
+	"errors"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+const (
+	SessionCookieName = "session_token"
+	TokenExpiration   = 6 * time.Hour
+)
+
+var (
+	ErrNoCookie = errors.New("session cookie not found")
+)
 
 func SetAuthCookie(c *gin.Context, token string, config CookieConfig) {
 	c.SetCookie(
