@@ -1,10 +1,18 @@
-package auth
+package middleware
 
 import (
+	"errors"
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rober0xf/notifier/internal/domain/entity"
+)
+
+var (
+	ErrUserIDNotFound = errors.New("user_id not found in context")
+	ErrInvalidUserID  = errors.New("invalid user_id type")
+	ErrMissingClaims  = errors.New("missing claims")
+	ErrInvalidRole    = errors.New("invalid role type")
 )
 
 func GetUserIDFromContext(c *gin.Context) (int, error) {

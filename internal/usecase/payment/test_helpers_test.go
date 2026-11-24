@@ -23,58 +23,58 @@ func setupTestUserRepo(t *testing.T) *MockUserRepositoryForPayment {
 	}
 }
 
-func setupCreatePaymentTest(t *testing.T) (*payment.CreatePaymentUseCase, *MockPaymentRepository) {
+func setupCreatePaymentTest(t *testing.T) (*payment.CreatePaymentService, *MockPaymentRepository) {
 	t.Helper()
 
 	mockRepo := setupTestPaymentRepo(t)
 
-	uc := payment.NewCreatePaymentUseCase(mockRepo)
+	s := payment.NewCreatePaymentService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupGetPaymentByIDTest(t *testing.T) (*payment.GetPaymentByIDUseCase, *MockPaymentRepository) {
+func setupGetPaymentByIDTest(t *testing.T) (*payment.GetPaymentByIDService, *MockPaymentRepository) {
 	t.Helper()
 
 	mockRepo := setupTestPaymentRepo(t)
-	uc := payment.NewGetPaymentByIDUseCase(mockRepo)
+	s := payment.NewGetPaymentByIDService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupGetAllPaymentsTest(t *testing.T) (*payment.GetAllPaymentsUseCase, *MockPaymentRepository) {
+func setupGetAllPaymentsTest(t *testing.T) (*payment.GetAllPaymentsService, *MockPaymentRepository) {
 	t.Helper()
 
 	mockRepo := setupTestPaymentRepo(t)
-	uc := payment.NewGetAllPaymentsUseCase(mockRepo)
+	s := payment.NewGetAllPaymentsService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupGetMyPaymentsTest(t *testing.T) (*payment.GetMyPaymentsUseCase, *MockPaymentRepository, *MockUserRepositoryForPayment) {
+func setupGetMyPaymentsTest(t *testing.T) (*payment.GetMyPaymentsService, *MockPaymentRepository, *MockUserRepositoryForPayment) {
 	t.Helper()
 
 	mockPaymentRepo := setupTestPaymentRepo(t)
 	mockUserRepo := setupTestUserRepo(t)
-	uc := payment.NewGetMyPaymentsUseCase(mockPaymentRepo, mockUserRepo)
+	s := payment.NewGetMyPaymentsService(mockPaymentRepo, mockUserRepo, nil)
 
-	return uc, mockPaymentRepo, mockUserRepo
+	return s, mockPaymentRepo, mockUserRepo
 }
 
-func setupDeletePaymentTest(t *testing.T) (*payment.DeletePaymentUseCase, *MockPaymentRepository) {
+func setupDeletePaymentTest(t *testing.T) (*payment.DeletePaymentService, *MockPaymentRepository) {
 	t.Helper()
 
 	mockRepo := setupTestPaymentRepo(t)
-	uc := payment.NewDeletePaymentUseCase(mockRepo)
+	s := payment.NewDeletePaymentService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }
 
-func setupUpdatePaymentTest(t *testing.T) (*payment.UpdatePaymentUseCase, *MockPaymentRepository) {
+func setupUpdatePaymentTest(t *testing.T) (*payment.UpdatePaymentService, *MockPaymentRepository) {
 	t.Helper()
 
 	mockRepo := setupTestPaymentRepo(t)
-	uc := payment.NewUpdatePaymentUseCase(mockRepo)
+	s := payment.NewUpdatePaymentService(mockRepo, nil)
 
-	return uc, mockRepo
+	return s, mockRepo
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 // GetByID godoc
@@ -33,24 +33,24 @@ func (h *PaymentHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	userID, err := auth.GetUserIDFromContext(c)
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
 	}
 
-	role, err := auth.GetRoleFromContext(c)
+	role, err := middleware.GetRoleFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
 	}
 
-	payment, err := h.getPaymentByIDUC.Execute(c.Request.Context(), id, userID, role)
+	payment, err := h.getPaymentByIDService.Execute(c.Request.Context(), id, userID, role)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrPaymentNotFound):
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "payment not found"})
-		case errors.Is(err, auth.ErrForbidden):
+		case errors.Is(err, middleware.ErrForbidden):
 			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "cannot access payments from other users"})
 		default:
 			slog.ErrorContext(c.Request.Context(), "failed to get payment by id", "error", err)
@@ -76,13 +76,13 @@ func (h *PaymentHandler) GetByID(c *gin.Context) {
 // @Failure      500  {object}  dto.ErrorResponse  "Internal server error"
 // @Router       /v1/auth/payments/me [get]
 func (h *PaymentHandler) GetMyPayments(c *gin.Context) {
-	userID, err := auth.GetUserIDFromContext(c)
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
 	}
 
-	payments, err := h.getMyPaymentsUC.Execute(c.Request.Context(), userID)
+	payments, err := h.getMyPaymentsService.Execute(c.Request.Context(), userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrUserNotFound):
@@ -115,7 +115,7 @@ func (h *PaymentHandler) GetMyPayments(c *gin.Context) {
 // @Failure      500  {object}  dto.ErrorResponse  "Internal server error"
 // @Router       /v1/admin/payments [get]
 func (h *PaymentHandler) GetAll(c *gin.Context) {
-	payments, err := h.getAllPaymentsUC.Execute(c.Request.Context())
+	payments, err := h.getAllPaymentsService.Execute(c.Request.Context())
 	if err != nil {
 		slog.ErrorContext(c.Request.Context(), "failed to get all payments", "error", err)
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal server error"})

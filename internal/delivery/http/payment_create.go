@@ -10,7 +10,7 @@ import (
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 // Create godoc
@@ -55,7 +55,7 @@ func (h *PaymentHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userID, err := auth.GetUserIDFromContext(c)
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
@@ -82,7 +82,7 @@ func (h *PaymentHandler) Create(c *gin.Context) {
 		ReceiptURL: strPtrOrNil(req.ReceiptURL),
 	}
 
-	createdPayment, err := h.createPaymentUC.Execute(c.Request.Context(), userID, payment)
+	createdPayment, err := h.createPaymentService.Execute(c.Request.Context(), userID, payment)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrPaymentAlreadyExists):

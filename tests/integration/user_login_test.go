@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,7 +59,7 @@ func TestLogin_Success_Integration(t *testing.T) {
 	cookies := loginW.Result().Cookies()
 	var sessionCookie *http.Cookie
 	for _, c := range cookies {
-		if c.Name == auth.SessionCookieName {
+		if c.Name == session.SessionCookieName {
 			sessionCookie = c
 			break
 		}

@@ -37,7 +37,7 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	user, err := h.getUserByIDUC.Execute(c.Request.Context(), id)
+	user, err := h.getUserByIDService.Execute(c.Request.Context(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrInvalidUserData):
@@ -75,7 +75,7 @@ func (h *UserHandler) GetByEmail(c *gin.Context) {
 		return
 	}
 
-	user, err := h.getUserByEmailUC.Execute(c.Request.Context(), email)
+	user, err := h.getUserByEmailService.Execute(c.Request.Context(), email)
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrInvalidEmailFormat):
@@ -103,7 +103,7 @@ func (h *UserHandler) GetByEmail(c *gin.Context) {
 // @Security     BearerAuth
 // @Router       /v1/admin/users [get]
 func (h *UserHandler) GetAll(c *gin.Context) {
-	users, err := h.getAllUsersUC.Execute(c.Request.Context())
+	users, err := h.getAllUsersService.Execute(c.Request.Context())
 	if err != nil {
 		slog.ErrorContext(c.Request.Context(), "failed to get all users", "error", err)
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "internal server error"})
@@ -111,9 +111,7 @@ func (h *UserHandler) GetAll(c *gin.Context) {
 	}
 
 	response := make([]entity.User, 0, len(users))
-	for _, u := range users {
-		response = append(response, u)
-	}
+	response = append(response, users...)
 
 	c.JSON(http.StatusOK, response)
 }

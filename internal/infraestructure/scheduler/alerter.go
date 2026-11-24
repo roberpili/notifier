@@ -1,20 +1,26 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
-	"github.com/rober0xf/notifier/pkg/email"
+	email "github.com/rober0xf/notifier/internal/infraestructure/email"
 )
 
 type Alerter struct {
 	sender email.EmailSender
+	logger *slog.Logger
 }
 
-func NewAlerter(sender email.EmailSender) *Alerter {
-	return &Alerter{sender: sender}
+func NewAlerter(sender email.EmailSender, logger *slog.Logger) *Alerter {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return &Alerter{sender: sender, logger: logger}
 }
 
 func (a *Alerter) InitCron() (gocron.Scheduler, error) {
@@ -42,15 +48,32 @@ func (a *Alerter) InitCron() (gocron.Scheduler, error) {
 	}
 
 	s.Start() // non-blocking, no goroutine or select{} needed
-	log.Println("cronjobs set")
+
+	a.logger.Info("cron scheduler started",
+		slog.String("timezone", time.Local.String()),
+		slog.String("daily", "07:00"),
+		slog.String("weekly", "Monday 07:00"),
+		slog.String("monthly", "1st day 07:00"),
+	)
+
 	return s, nil
 }
 
-func (a *Alerter) run(job, title string, target time.Time) {
-	log.Printf("========== %s triggered ==========", job)
-	if err := a.SendPaymentAlert(title, target); err != nil {
-		log.Printf("%s error: %v", job, err)
+func (a *Alerter) run(ctx context.Context, job, title string, target time.Time) {
+	a.logger.InfoContext(ctx, "cron job triggered",
+		slog.String("job", job),
+		slog.Time("target_date", target),
+	)
+
+	if err := a.SendPaymentAlert(ctx, title, target); err != nil {
+		a.logger.ErrorContext(ctx, "cron job failed",
+			slog.String("job", job),
+			slog.Any("error", err),
+		)
 		return
 	}
-	log.Printf("========== %s finished ==========", job)
+
+	a.logger.InfoContext(ctx, "cron job completed",
+		slog.String("job", job),
+	)
 }

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -16,21 +17,26 @@ const smtpSessionTimeout = 30 * time.Second
 
 type SMTPSender struct {
 	host     string
-	port     string
+	port     int
 	username string
 	password string
 	from     string
+	fromName string
 }
 
-func NewSMTPSender(host, port, username, password, from string) *SMTPSender {
+func NewSMTPSender(host string, port int, username, password, from string, fromName ...string) *SMTPSender {
 	if host == "" {
 		host = "smtp.gmail.com"
 	}
-	if port == "" {
-		port = "587"
+	if port == 0 {
+		port = 587
 	}
 	if from == "" {
 		from = username
+	}
+	name := ""
+	if len(fromName) > 0 {
+		name = fromName[0]
 	}
 	return &SMTPSender{
 		host:     host,
@@ -38,6 +44,7 @@ func NewSMTPSender(host, port, username, password, from string) *SMTPSender {
 		username: username,
 		password: password,
 		from:     from,
+		fromName: name,
 	}
 }
 
@@ -50,6 +57,11 @@ func (s *SMTPSender) Send(ctx context.Context, to []string, subject, htmlBody st
 	if err != nil {
 		return fmt.Errorf("invalid from address: %w", err)
 	}
+
+	if s.fromName != "" {
+		from.Name = s.fromName
+	}
+
 	rcpts := make([]string, 0, len(to))
 	for _, addr := range to {
 		a, err := mail.ParseAddress(addr)
@@ -58,11 +70,12 @@ func (s *SMTPSender) Send(ctx context.Context, to []string, subject, htmlBody st
 		}
 		rcpts = append(rcpts, a.Address)
 	}
+
 	if strings.ContainsAny(subject, "\r\n") {
 		return fmt.Errorf("subject contains line breaks")
 	}
 
-	address := net.JoinHostPort(s.host, s.port)
+	address := net.JoinHostPort(s.host, strconv.Itoa(s.port))
 	dialer := &net.Dialer{Timeout: 5 * time.Second}
 
 	conn, err := dialer.DialContext(ctx, "tcp", address)

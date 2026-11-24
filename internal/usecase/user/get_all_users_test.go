@@ -11,7 +11,7 @@ import (
 
 func TestGetAllUsers(t *testing.T) {
 	t.Run("successfully found all users", func(t *testing.T) {
-		uc, mockRepo := setupGetAllUsersTest(t)
+		s, mockRepo := setupGetAllUsersTest(t)
 
 		users := []*entity.User{
 			{ID: 1, Email: "user1@test.com", Username: "user1", IsActive: true},
@@ -24,7 +24,7 @@ func TestGetAllUsers(t *testing.T) {
 			mockRepo.users[u.ID] = u
 		}
 
-		result, err := uc.Execute(context.Background())
+		result, err := s.Execute(context.Background())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -41,9 +41,9 @@ func TestGetAllUsers(t *testing.T) {
 	})
 
 	t.Run("returns empty list when no users exist", func(t *testing.T) {
-		uc, _ := setupGetAllUsersTest(t)
+		s, _ := setupGetAllUsersTest(t)
 
-		users, err := uc.Execute(context.Background())
+		users, err := s.Execute(context.Background())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, users)
@@ -51,7 +51,7 @@ func TestGetAllUsers(t *testing.T) {
 	})
 
 	t.Run("returns users with different status", func(t *testing.T) {
-		uc, mockRepo := setupGetAllUsersTest(t)
+		s, mockRepo := setupGetAllUsersTest(t)
 
 		activeUser := &entity.User{ID: 1, Email: "active@test.com", Username: "active", IsActive: true}
 		inactiveUser := &entity.User{ID: 2, Email: "inactive@test.com", Username: "inactive", IsActive: false}
@@ -61,7 +61,7 @@ func TestGetAllUsers(t *testing.T) {
 		mockRepo.emails["inactive@test.com"] = inactiveUser
 		mockRepo.users[2] = inactiveUser
 
-		users, err := uc.Execute(context.Background())
+		users, err := s.Execute(context.Background())
 
 		assert.NoError(t, err)
 		assert.Len(t, users, 2)
@@ -79,11 +79,11 @@ func TestGetAllUsers(t *testing.T) {
 	})
 
 	t.Run("handles repository errors", func(t *testing.T) {
-		uc, mockRepo := setupGetAllUsersTest(t)
+		s, mockRepo := setupGetAllUsersTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
 
-		users, err := uc.Execute(context.Background())
+		users, err := s.Execute(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, users)

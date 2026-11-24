@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rober0xf/notifier/internal/delivery/http/dto"
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
-	"github.com/rober0xf/notifier/pkg/auth"
+	"github.com/rober0xf/notifier/internal/middleware"
 )
 
 // Update godoc
@@ -35,7 +35,7 @@ func (h *PaymentHandler) Update(c *gin.Context) {
 		return
 	}
 
-	userID, err := auth.GetUserIDFromContext(c)
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "unauthorized"})
 		return
@@ -54,12 +54,12 @@ func (h *PaymentHandler) Update(c *gin.Context) {
 		return
 	}
 
-	err = h.updatePaymentUC.Execute(c.Request.Context(), id, userID, req.ToInput())
+	err = h.updatePaymentService.Execute(c.Request.Context(), id, userID, req.ToInput())
 	if err != nil {
 		switch {
 		case errors.Is(err, domainErr.ErrPaymentNotFound):
 			c.JSON(http.StatusNotFound, dto.ErrorResponse{Error: "payment not found"})
-		case errors.Is(err, auth.ErrForbidden):
+		case errors.Is(err, middleware.ErrForbidden):
 			c.JSON(http.StatusForbidden, dto.ErrorResponse{Error: "cannot update another user's payment"})
 		default:
 			slog.ErrorContext(c.Request.Context(), "failed to update payment by id", "error", err)

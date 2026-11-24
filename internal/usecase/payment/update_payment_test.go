@@ -14,7 +14,7 @@ import (
 
 func TestUpdatePayment(t *testing.T) {
 	t.Run("successful update payment", func(t *testing.T) {
-		uc, mockRepo := setupUpdatePaymentTest(t)
+		s, mockRepo := setupUpdatePaymentTest(t)
 
 		paymnt := &entity.Payment{
 			UserID:    1,
@@ -36,7 +36,7 @@ func TestUpdatePayment(t *testing.T) {
 			Amount: &newAmount,
 		}
 
-		err := uc.Execute(context.Background(), 1, 1, input)
+		_ = s.Execute(context.Background(), 1, 1, input)
 
 		updatedPayment, err := mockRepo.GetPaymentByID(context.Background(), 1)
 
@@ -54,7 +54,7 @@ func TestUpdatePayment(t *testing.T) {
 	})
 
 	t.Run("successfully updates only name", func(t *testing.T) {
-		uc, mockRepo := setupUpdatePaymentTest(t)
+		s, mockRepo := setupUpdatePaymentTest(t)
 
 		paymnt := &entity.Payment{
 			ID:       1,
@@ -72,7 +72,7 @@ func TestUpdatePayment(t *testing.T) {
 			Name: &newName,
 		}
 
-		err := uc.Execute(context.Background(), 1, 1, input)
+		_ = s.Execute(context.Background(), 1, 1, input)
 		updatedPayment, err := mockRepo.GetPaymentByID(context.Background(), 1)
 
 		assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestUpdatePayment(t *testing.T) {
 	})
 
 	t.Run("successfully updates recurrent payment frequency", func(t *testing.T) {
-		uc, mockRepo := setupUpdatePaymentTest(t)
+		s, mockRepo := setupUpdatePaymentTest(t)
 
 		monthly := entity.FrequencyTypeMonthly
 		paymnt := &entity.Payment{
@@ -102,7 +102,7 @@ func TestUpdatePayment(t *testing.T) {
 			Frequency: &yearly,
 		}
 
-		err := uc.Execute(context.Background(), 1, 1, input)
+		_ = s.Execute(context.Background(), 1, 1, input)
 		updatedPayment, err := mockRepo.GetPaymentByID(context.Background(), 1)
 
 		assert.NoError(t, err)
@@ -110,21 +110,21 @@ func TestUpdatePayment(t *testing.T) {
 	})
 
 	t.Run("returns error when payment not found", func(t *testing.T) {
-		uc, _ := setupUpdatePaymentTest(t)
+		s, _ := setupUpdatePaymentTest(t)
 
 		name := "GPT"
 		input := payment.UpdatePaymentInput{
 			Name: &name,
 		}
 
-		err := uc.Execute(context.Background(), 99999, 1, input)
+		err := s.Execute(context.Background(), 99999, 1, input)
 
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, domainErr.ErrPaymentNotFound)
 	})
 
 	t.Run("handles repository get errors", func(t *testing.T) {
-		uc, mockRepo := setupUpdatePaymentTest(t)
+		s, mockRepo := setupUpdatePaymentTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
 
@@ -133,14 +133,14 @@ func TestUpdatePayment(t *testing.T) {
 			Name: &name,
 		}
 
-		err := uc.Execute(context.Background(), 1, 1, input)
+		err := s.Execute(context.Background(), 1, 1, input)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "database connection failed")
 	})
 
 	t.Run("handles repository update errors", func(t *testing.T) {
-		uc, mockRepo := setupUpdatePaymentTest(t)
+		s, mockRepo := setupUpdatePaymentTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
 
@@ -162,7 +162,7 @@ func TestUpdatePayment(t *testing.T) {
 
 		mockRepo.err = errors.New("update failed")
 
-		err := uc.Execute(context.Background(), 1, 1, input)
+		err := s.Execute(context.Background(), 1, 1, input)
 
 		assert.Error(t, err)
 	})

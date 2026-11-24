@@ -1,15 +1,31 @@
-package auth
+package middleware
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/domain/entity"
 )
 
-func AuthMiddleware(tokenGen TokenGenerator, cookieName string) gin.HandlerFunc {
+const (
+	BearerPrefix   = "Bearer "
+	AuthHeaderName = "Authorization"
+)
+
+var (
+	ErrInvalidToken       = errors.New("invalid or expired token")
+	ErrRoleMissing        = errors.New("user role missing")
+	ErrNoToken            = errors.New("no token provided")
+	ErrMalformedHeader    = errors.New("malformed authorization header")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrForbidden          = errors.New("forbidden")
+)
+
+func AuthMiddleware(tokenGen auth.TokenGenerator, cookieName string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tokenString, err := extractToken(ctx, cookieName)
 		if err != nil {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/rober0xf/notifier/internal/auth"
 	"github.com/rober0xf/notifier/internal/domain/entity"
 	"github.com/rober0xf/notifier/internal/usecase/user"
-	"github.com/rober0xf/notifier/pkg/auth"
 	"github.com/stretchr/testify/assert"
 
 	domainErr "github.com/rober0xf/notifier/internal/domain/errors"
@@ -14,7 +14,7 @@ import (
 
 func TestUpdateUserProfile(t *testing.T) {
 	t.Run("successfully updates user profile", func(t *testing.T) {
-		uc, mockRepo := setupUpdateUserTest(t)
+		s, mockRepo := setupUpdateUserTest(t)
 
 		// original data
 		originalEmail := "original@gmail.com"
@@ -36,19 +36,19 @@ func TestUpdateUserProfile(t *testing.T) {
 			Username: strPtr("username changed"),
 			Email:    strPtr("changed@gmail.com"),
 		}
-		updatedUser, err := uc.Execute(context.Background(), input, input.ID, originalUser.Role)
+		updatedUser, err := s.Execute(context.Background(), input, input.ID, originalUser.Role)
 		assert.NoError(t, err)
 		assert.Equal(t, "username changed", updatedUser.Username)
 		assert.Equal(t, "changed@gmail.com", updatedUser.Email)
 		assert.Equal(t, hashedPassword, updatedUser.PasswordHash)
 
-		getUserByEmail := user.NewGetUserByEmailUseCase(mockRepo)
+		getUserByEmail := user.NewGetUserByEmailService(mockRepo, nil)
 		_, err = getUserByEmail.Execute(context.Background(), originalEmail)
 		assert.Error(t, err)
 	})
 
 	t.Run("successfully updates only username", func(t *testing.T) {
-		uc, mockRepo := setupUpdateUserTest(t)
+		s, mockRepo := setupUpdateUserTest(t)
 
 		email := "richard@gmail.com"
 		usr := &entity.User{
@@ -66,7 +66,7 @@ func TestUpdateUserProfile(t *testing.T) {
 			Username: strPtr("new username"),
 		}
 
-		updatedUser, err := uc.Execute(context.Background(), input, input.ID, usr.Role)
+		updatedUser, err := s.Execute(context.Background(), input, input.ID, usr.Role)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "new username", updatedUser.Username)
@@ -74,14 +74,14 @@ func TestUpdateUserProfile(t *testing.T) {
 	})
 
 	t.Run("returns error when user not found", func(t *testing.T) {
-		uc, _ := setupUpdateUserTest(t)
+		s, _ := setupUpdateUserTest(t)
 
 		input := user.UpdateUserInput{
 			ID:       99999,
 			Username: strPtr("richard"),
 		}
 
-		_, err := uc.Execute(context.Background(), input, input.ID, entity.RoleUser)
+		_, err := s.Execute(context.Background(), input, input.ID, entity.RoleUser)
 
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, domainErr.ErrUserNotFound)
@@ -90,7 +90,7 @@ func TestUpdateUserProfile(t *testing.T) {
 
 func TestUpdateUserPassword(t *testing.T) {
 	t.Run("successfully updates password", func(t *testing.T) {
-		uc, mockRepo := setupUpdateUserTest(t)
+		s, mockRepo := setupUpdateUserTest(t)
 
 		oldHashedPassword, _ := auth.HashPassword("password123#!-")
 		email := "richard@gmail.com"
@@ -111,7 +111,7 @@ func TestUpdateUserPassword(t *testing.T) {
 			Password: strPtr(plainPassword),
 		}
 
-		updatedUser, err := uc.Execute(context.Background(), input, input.ID, usr.Role)
+		updatedUser, err := s.Execute(context.Background(), input, input.ID, usr.Role)
 
 		assert.NoError(t, err)
 		assert.NotEqual(t, oldHashedPassword, updatedUser.PasswordHash)

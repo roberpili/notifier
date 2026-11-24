@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"html"
 	"log"
+	"log/slog"
 	"strings"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/rober0xf/notifier/pkg/database"
+	"github.com/rober0xf/notifier/internal/database"
 )
 
 type payment struct {
@@ -19,12 +20,14 @@ type payment struct {
 	PayType string
 }
 
-func (a *Alerter) SendPaymentAlert(title string, targetDate time.Time) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+func (a *Alerter) SendPaymentAlert(ctx context.Context, title string, targetDate time.Time) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
 	dateStr := targetDate.Format("2006-01-02")
-	log.Printf("starting SendPaymentAlert for date: %s", dateStr)
+	a.logger.InfoContext(ctx, "starting payment alert",
+		slog.String("target_date", dateStr),
+	)
 
 	query := `
 				SELECT users.email, payments.name, payments.amount, payments.type
@@ -68,15 +71,26 @@ func (a *Alerter) SendPaymentAlert(title string, targetDate time.Time) error {
 		sendCancel()
 
 		if err != nil {
-			log.Printf("error sending email to %s: %v", addr, err)
+			a.logger.ErrorContext(ctx, "failed to send payment alert",
+				slog.Any("error", err),
+			)
 			failed++
 			continue
 		}
-		log.Printf("email sent to: %s", addr)
+
 		sent++
 	}
 
-	log.Printf("email stats - sent: %d, failed: %d", sent, failed)
+	a.logger.InfoContext(ctx, "payment alert completed",
+		slog.Int("users", len(byUser)),
+		slog.Int("sent", sent),
+		slog.Int("failed", failed),
+	)
+
+	if failed > 0 {
+		return fmt.Errorf("failed to send %d of %d payment alerts", failed, len(byUser))
+	}
+
 	return nil
 }
 
@@ -92,13 +106,13 @@ func buildBody(dateStr string, payments []payment) string {
 }
 
 func (a *Alerter) SendDailyAlert() {
-	a.run("SendDailyAlert", "daily payment alert", time.Now().AddDate(0, 0, 1))
+	a.run(context.Background(), "SendDailyAlert", "daily payment alert", time.Now().AddDate(0, 0, 1))
 }
 
 func (a *Alerter) SendWeeklyAlert() {
-	a.run("SendWeeklyAlert", "weekly payment alert", time.Now().AddDate(0, 0, 7))
+	a.run(context.Background(), "SendWeeklyAlert", "weekly payment alert", time.Now().AddDate(0, 0, 7))
 }
 
 func (a *Alerter) SendMonthlyAlert() {
-	a.run("SendMonthlyAlert", "monthly payment alert", time.Now().AddDate(0, 1, 0))
+	a.run(context.Background(), "SendMonthlyAlert", "monthly payment alert", time.Now().AddDate(0, 1, 0))
 }

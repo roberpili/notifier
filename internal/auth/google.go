@@ -2,8 +2,15 @@ package auth
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/api/idtoken"
+)
+
+var (
+	ErrInvalidEmailToken          = errors.New("invalid email in token")
+	ErrEmailNotVerified           = errors.New("email not verified by google")
+	ErrGoogleAccountAlreadyLinked = errors.New("google account already linked")
 )
 
 type googleVerifier struct {

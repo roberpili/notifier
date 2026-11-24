@@ -21,7 +21,7 @@ func TestGetAllPayments_Success_Integration(t *testing.T) {
 	userID2, err := getUserIDFromToken(token2)
 	require.NoError(t, err)
 
-	_, err = insertTestPayment(context.Background(), paymentDeps.db, userID1, TestPayment{
+	_, _ = insertTestPayment(context.Background(), paymentDeps.db, userID1, TestPayment{
 		Name:      "claude",
 		Amount:    15.99,
 		Type:      "subscription",
@@ -30,7 +30,7 @@ func TestGetAllPayments_Success_Integration(t *testing.T) {
 		Paid:      false,
 		Recurrent: false,
 	})
-	_, err = insertTestPayment(context.Background(), paymentDeps.db, userID1, TestPayment{
+	_, _ = insertTestPayment(context.Background(), paymentDeps.db, userID1, TestPayment{
 		Name:      "mac",
 		Amount:    1700,
 		Type:      "expense",
@@ -39,7 +39,7 @@ func TestGetAllPayments_Success_Integration(t *testing.T) {
 		Paid:      true,
 		Recurrent: false,
 	})
-	_, err = insertTestPayment(context.Background(), paymentDeps.db, userID2, TestPayment{
+	_, _ = insertTestPayment(context.Background(), paymentDeps.db, userID2, TestPayment{
 		Name:      "work",
 		Amount:    2300,
 		Type:      "income",

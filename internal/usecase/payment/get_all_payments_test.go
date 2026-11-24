@@ -12,7 +12,7 @@ import (
 
 func TestGetAllPayments(t *testing.T) {
 	t.Run("successfully found all payments", func(t *testing.T) {
-		uc, mockRepo := setupGetAllPaymentsTest(t)
+		s, mockRepo := setupGetAllPaymentsTest(t)
 
 		payments := []*entity.Payment{
 			{
@@ -52,7 +52,7 @@ func TestGetAllPayments(t *testing.T) {
 			mockRepo.payments[idStr] = u
 		}
 
-		result, err := uc.Execute(context.Background())
+		result, err := s.Execute(context.Background())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -69,9 +69,9 @@ func TestGetAllPayments(t *testing.T) {
 	})
 
 	t.Run("returns empty list when no payments exists", func(t *testing.T) {
-		uc, _ := setupGetAllPaymentsTest(t)
+		s, _ := setupGetAllPaymentsTest(t)
 
-		payments, err := uc.Execute(context.Background())
+		payments, err := s.Execute(context.Background())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, payments)
@@ -80,7 +80,7 @@ func TestGetAllPayments(t *testing.T) {
 	})
 
 	t.Run("returns payments from different users", func(t *testing.T) {
-		uc, mockRepo := setupGetAllPaymentsTest(t)
+		s, mockRepo := setupGetAllPaymentsTest(t)
 
 		user1Payment := &entity.Payment{
 			ID:       1,
@@ -105,18 +105,18 @@ func TestGetAllPayments(t *testing.T) {
 		mockRepo.payments["1"] = user1Payment
 		mockRepo.payments["2"] = user2Payment
 
-		payments, err := uc.Execute(context.Background())
+		payments, err := s.Execute(context.Background())
 
 		assert.NoError(t, err)
 		assert.Len(t, payments, 2)
 	})
 
 	t.Run("handles repository errors", func(t *testing.T) {
-		uc, mockRepo := setupGetAllPaymentsTest(t)
+		s, mockRepo := setupGetAllPaymentsTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
 
-		payments, err := uc.Execute(context.Background())
+		payments, err := s.Execute(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, payments)

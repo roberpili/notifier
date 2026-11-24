@@ -10,7 +10,7 @@ help:
 	@echo "  make logs     		- view all logs"
 	@echo "  make restart  		- restart all services"
 	@echo "  make clean    		- stop and remove everything"
-	@echo "  make test     		- run backend tests"
+	@echo "  make test     		- run tests"
 	@echo "  make lint     		- run linter on backend code"
 	@echo "  make vulncheck     - run vulnerabilities check on backend code"
 	@echo "  make swagger     	- generate openapi documentation"
@@ -33,11 +33,10 @@ clean:
 	docker compose down -v --rmi all
 
 test:
-	cd notifier-backend && go test ./... -v
+	go test ./... -v
 
 lint:
 	golangci-lint run --timeout 10m --config staticcheck.yml
-
 
 vulncheck:
 	govulncheck ./...

@@ -11,9 +11,9 @@ import (
 
 func TestCreateUser(t *testing.T) {
 	t.Run("succesfully creates a new user", func(t *testing.T) {
-		uc, _, mockEmailSender := setupCreateUserTest(t)
+		s, _, mockEmailSender := setupCreateUserTest(t)
 
-		user, err := uc.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
+		user, err := s.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
 
 		assert.NoError(t, err)
 		assert.NotNil(t, user)
@@ -22,52 +22,52 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("fails when username in use", func(t *testing.T) {
-		uc, _, _ := setupCreateUserTest(t)
+		s, _, _ := setupCreateUserTest(t)
 
-		_, err := uc.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
+		_, err := s.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
 		assert.NoError(t, err)
 
-		_, err = uc.Execute(context.Background(), "richard", "pied@gmail.com", "password123#-!")
+		_, err = s.Execute(context.Background(), "richard", "pied@gmail.com", "password123#-!")
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, domainErr.ErrUsernameAlreadyExists)
 	})
 
 	t.Run("fails when email in use", func(t *testing.T) {
-		uc, _, _ := setupCreateUserTest(t)
+		s, _, _ := setupCreateUserTest(t)
 
-		_, err := uc.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
+		_, err := s.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
 		assert.NoError(t, err)
 
-		_, err = uc.Execute(context.Background(), "richard2", "piedpiper@gmail.com", "password123#-!")
+		_, err = s.Execute(context.Background(), "richard2", "piedpiper@gmail.com", "password123#-!")
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, domainErr.ErrEmailAlreadyExists)
 	})
 
 	t.Run("fails with invalid email format", func(t *testing.T) {
-		uc, _, _ := setupCreateUserTest(t)
+		s, _, _ := setupCreateUserTest(t)
 
-		_, err := uc.Execute(context.Background(), "richard", "notanemail", "password123#-!")
+		_, err := s.Execute(context.Background(), "richard", "notanemail", "password123#-!")
 		assert.ErrorIs(t, err, domainErr.ErrInvalidEmailFormat)
 	})
 
 	t.Run("fails when email domain cannot get emails", func(t *testing.T) {
-		uc, _, _ := setupCreateUserTest(t)
+		s, _, _ := setupCreateUserTest(t)
 
-		_, err := uc.Execute(context.Background(), "richard", "richard@mailnator.com", "password123#-!")
+		_, err := s.Execute(context.Background(), "richard", "richard@mailnator.com", "password123#-!")
 		assert.ErrorIs(t, err, domainErr.ErrInvalidDomain)
 	})
 
 	t.Run("fails with weak password", func(t *testing.T) {
-		uc, _, _ := setupCreateUserTest(t)
+		s, _, _ := setupCreateUserTest(t)
 
-		_, err := uc.Execute(context.Background(), "richard", "piedpiper@gmail.com", "123")
+		_, err := s.Execute(context.Background(), "richard", "piedpiper@gmail.com", "123")
 		assert.ErrorIs(t, err, domainErr.ErrInvalidPassword)
 	})
 
 	t.Run("stores hashed password not plaintext", func(t *testing.T) {
-		uc, mockRepo, _ := setupCreateUserTest(t)
+		s, mockRepo, _ := setupCreateUserTest(t)
 
-		_, err := uc.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
+		_, err := s.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
 		assert.NoError(t, err)
 
 		storedUser := mockRepo.users[1]
@@ -77,10 +77,10 @@ func TestCreateUser(t *testing.T) {
 
 	t.Run("sends email when not in test mode", func(t *testing.T) {
 		t.Setenv("ENV", "development")
-		uc, _, mockEmailSender := setupCreateUserTest(t)
+		s, _, mockEmailSender := setupCreateUserTest(t)
 
 		mockEmailSender.ExpectSends(1)
-		_, err := uc.Execute(context.Background(), "john", "john@example.com", "password123#-!")
+		_, err := s.Execute(context.Background(), "john", "john@example.com", "password123#-!")
 		assert.NoError(t, err)
 
 		mockEmailSender.Wait()
@@ -93,13 +93,13 @@ func TestCreateUser(t *testing.T) {
 
 	t.Run("creates user even when email sending fails", func(t *testing.T) {
 		t.Setenv("ENV", "development")
-		uc, _, mockEmailSender := setupCreateUserTest(t)
+		s, _, mockEmailSender := setupCreateUserTest(t)
 
 		// simulate error
 		mockEmailSender.Err = errors.New("SMTP connection failed")
 		mockEmailSender.ExpectSends(1)
 
-		user, err := uc.Execute(context.Background(), "john", "john@example.com", "password123#-!")
+		user, err := s.Execute(context.Background(), "john", "john@example.com", "password123#-!")
 		mockEmailSender.Wait()
 
 		assert.NoError(t, err)
@@ -108,10 +108,10 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("handles repository error", func(t *testing.T) {
-		uc, mockRepo, _ := setupCreateUserTest(t)
+		s, mockRepo, _ := setupCreateUserTest(t)
 
 		mockRepo.err = errors.New("database connection failed")
-		_, err := uc.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
+		_, err := s.Execute(context.Background(), "richard", "piedpiper@gmail.com", "password123#-!")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "database connection failed")

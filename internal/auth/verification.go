@@ -1,9 +1,10 @@
-package token
+package auth
 
 import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/rober0xf/notifier/internal/domain/entity"
@@ -12,7 +13,7 @@ import (
 func GenerateVerificationToken(expirationHours int) (*entity.VerificationToken, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("generate random token: %w", err)
 	}
 
 	plainToken := hex.EncodeToString(b)
